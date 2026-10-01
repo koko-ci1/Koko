@@ -1,0 +1,19 @@
+{
+  "version": "4.1",
+  "goal": "production deployment foundation",
+  "components": [
+    "KÔKÔ API",
+    "PostgreSQL 16",
+    "Nginx HTTPS",
+    "private storage",
+    "backup script"
+  ],
+  "not_automated": [
+    "real server provisioning",
+    "DNS changes",
+    "TLS issuance",
+    "real payment activation",
+    "legal approval"
+  ],
+  "next_major_step": "real deployment on selected infrastructure"
+}

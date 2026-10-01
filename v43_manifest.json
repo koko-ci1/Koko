@@ -1,0 +1,11 @@
+{
+  "version": "4.3",
+  "goal": "pilot infrastructure architecture",
+  "recommended_shape": "single VPS + PostgreSQL + private object storage + HTTPS",
+  "scale_strategy": "measure first, scale when justified",
+  "candidate_providers": [
+    "DigitalOcean",
+    "Hetzner"
+  ],
+  "next": "select provider and deploy with user-owned credentials"
+}

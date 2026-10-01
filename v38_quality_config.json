@@ -1,0 +1,25 @@
+{
+  "version": "3.8",
+  "country": "Côte d'Ivoire",
+  "currency": "XOF",
+  "levels": [
+    "GREEN",
+    "AMBER",
+    "RED"
+  ],
+  "legal_review_required": true,
+  "principles": [
+    "Signals are not verdicts",
+    "Explainable alerts",
+    "Human review for technical quality decisions",
+    "Configurable product thresholds",
+    "Data minimization"
+  ],
+  "default_rules": {
+    "delay_warning_days": 1,
+    "delay_critical_days": 3,
+    "missing_evidence": "AMBER",
+    "blocked_milestone": "RED",
+    "repeated_claims": "AMBER"
+  }
+}

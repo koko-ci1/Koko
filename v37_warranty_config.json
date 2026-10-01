@@ -1,0 +1,31 @@
+{
+  "version": "3.7",
+  "country": "Côte d'Ivoire",
+  "currency": "XOF",
+  "feature": "warranties_and_after_sales_service",
+  "legal_review_required": true,
+  "warranty_statuses": [
+    "ACTIVE",
+    "EXPIRED",
+    "SUSPENDED",
+    "CANCELLED"
+  ],
+  "claim_statuses": [
+    "OPEN",
+    "UNDER_REVIEW",
+    "ACCEPTED",
+    "REJECTED",
+    "SCHEDULED",
+    "IN_PROGRESS",
+    "RESOLVED",
+    "CLIENT_CONFIRMED",
+    "CLOSED"
+  ],
+  "principles": [
+    "Do not invent statutory warranties",
+    "Use contractual coverage where applicable",
+    "A signal is not proof of fault",
+    "Human/qualified technical review when needed",
+    "Data minimization and access control"
+  ]
+}

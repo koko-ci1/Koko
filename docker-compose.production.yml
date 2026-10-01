@@ -1,0 +1,28 @@
+services:
+  koko-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    depends_on:
+      - koko-db
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - koko_private_uploads:/app/private-uploads
+
+  koko-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: koko
+      POSTGRES_USER: koko
+      POSTGRES_PASSWORD: CHANGE_ME
+    volumes:
+      - koko_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  koko_postgres_data:
+  koko_private_uploads:

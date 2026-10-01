@@ -1,0 +1,38 @@
+{
+  "version": "4.0",
+  "name": "Préparation production & exploitation",
+  "environment_variables_required": [
+    "NODE_ENV",
+    "PORT",
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "SESSION_SECRET",
+    "APP_BASE_URL",
+    "CORS_ORIGIN",
+    "PAYMENT_PROVIDER",
+    "PAYMENT_API_KEY",
+    "PAYMENT_WEBHOOK_SECRET",
+    "STORAGE_PROVIDER",
+    "STORAGE_BUCKET"
+  ],
+  "production_rules": {
+    "https": "required",
+    "debug_mode": "disabled",
+    "simulators": "disabled",
+    "secrets_in_source": "forbidden",
+    "private_uploads": "required",
+    "database_backups": "required",
+    "audit_logs": "required",
+    "admin_mfa": "required_before_public_launch",
+    "rate_limiting": "required"
+  },
+  "launch_gates": [
+    "legal_validation",
+    "payment_provider_validation",
+    "security_review",
+    "backup_restore_test",
+    "privacy_review",
+    "pilot_with_real_users",
+    "incident_response_plan"
+  ]
+}

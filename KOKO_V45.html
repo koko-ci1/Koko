@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KÔKÔ V4.5 — Parcours utilisateur</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;background:#f5f7fb;color:#172033}
+header{background:#111827;color:white;padding:24px} main{max-width:900px;margin:auto;padding:20px}
+.card{background:white;border-radius:16px;padding:20px;margin:14px 0;box-shadow:0 4px 18px #00000010}
+button{background:#111827;color:white;border:0;border-radius:10px;padding:12px 16px;font-size:16px}
+input,textarea{width:100%;box-sizing:border-box;padding:12px;margin:8px 0;border:1px solid #d1d5db;border-radius:10px}
+.step{display:none}.step.active{display:block}.muted{color:#667085}.pill{display:inline-block;background:#eef2ff;padding:6px 9px;border-radius:20px;margin:3px}
+</style></head>
+<body>
+<header><h1>KÔKÔ</h1><div>Vérifie. Trouve. Achète. Fais.</div></header>
+<main>
+<div class="card"><strong>Prototype V4.5</strong><p class="muted">Parcours client simulé — aucun paiement réel.</p></div>
+<div id="app">
+<section class="step active"><div class="card"><h2>Quel est votre besoin ?</h2><textarea id="need" rows="5" placeholder="Ex. Mon toit fuit quand il pleut à Cocody Angré..."></textarea><button onclick="next()">Continuer</button></div></section>
+<section class="step"><div class="card"><h2>KÔKÔ a structuré votre demande</h2><p><span class="pill">Catégorie : Étanchéité</span><span class="pill">Zone : Cocody Angré</span><span class="pill">Urgence : élevée</span></p><p>Ajoutez des photos si vous en avez.</p><input type="file" multiple accept="image/*"><button onclick="next()">Voir les professionnels</button></div></section>
+<section class="step"><div class="card"><h2>Professionnels disponibles</h2><p>3 profils correspondent aux critères.</p><p>✓ Service correspondant<br>✓ Zone couverte<br>✓ Disponibilité<br>✓ Signaux de confiance</p><button onclick="next()">Voir les devis</button></div></section>
+<section class="step"><div class="card"><h2>Devis reçus</h2><p><strong>Professionnel A</strong> — 185 000 FCFA — 2 jours</p><p><strong>Professionnel B</strong> — 220 000 FCFA — 1 jour</p><p><strong>Professionnel C</strong> — 195 000 FCFA — 3 jours</p><p class="muted">KÔKÔ présente les informations ; le client décide.</p><button onclick="next()">Choisir et continuer</button></div></section>
+<section class="step"><div class="card"><h2>Suivi de l'intervention</h2><p>✓ Confirmé → ✓ En route → ✓ Arrivé → <strong>En cours</strong> → Terminé</p><button onclick="next()">Voir les preuves</button></div></section>
+<section class="step"><div class="card"><h2>Preuves et validation</h2><p>Photos avant/après et récapitulatif de la prestation.</p><button onclick="next()">Valider la prestation</button></div></section>
+<section class="step"><div class="card"><h2>Prestation terminée</h2><p>Vous pouvez maintenant laisser un avis et accéder aux informations de garantie/SAV.</p><button onclick="restart()">Rejouer le parcours</button></div></section>
+</div></main>
+<script>
+let i=0,s=document.querySelectorAll('.step');
+function next(){if(i<s.length-1){s[i].classList.remove('active');i++;s[i].classList.add('active');window.scrollTo(0,0)}}
+function restart(){s[i].classList.remove('active');i=0;s[0].classList.add('active');window.scrollTo(0,0)}
+</script></body></html>

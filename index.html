@@ -1,47 +1,1617 @@
 <!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KÔKÔ — Vérifie. Trouve. Achète. Fais.</title>
-  <style>
-    body{font-family:Arial,sans-serif;margin:0;background:#f7f7fb;color:#17171c}
-    header{padding:28px 20px;background:#17122b;color:white}
-    main{max-width:760px;margin:auto;padding:20px}
-    .card{background:white;border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 5px 20px #00000010}
-    input,textarea,button{width:100%;box-sizing:border-box;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #ddd;font-size:16px}
-    button{background:#6d28d9;color:white;border:0;font-weight:700}
-    .ok{padding:12px;border-radius:10px;background:#eefdf3;margin-top:12px}
-  </style>
-</head>
-<body>
-<header>
-  <h1>KÔKÔ</h1>
-  <div>Vérifie. Trouve. Achète. Fais.</div>
-</header>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827"><title>KÔKÔ — MVP connecté</title>
+<style>
+:root{--ink:#111827;--muted:#667085;--bg:#f4f6fa;--card:#fff;--line:#e5e7eb;--brand:#f59e0b;--green:#16a34a;--blue:#2563eb}
+*{box-sizing:border-box}body{margin:0;background:#e8ecf2;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink)}
+.app{max-width:480px;margin:auto;min-height:100vh;background:var(--bg);box-shadow:0 0 30px #0001}
+header{background:#111827;color:#fff;padding:17px 18px}.logo{font-size:28px;font-weight:900}.logo i{color:#fbbf24;font-style:normal}.tag{font-size:12px;color:#cbd5e1}
+main{padding:16px 16px 90px}.screen{display:none}.screen.active{display:block}
+h1{font-size:24px;margin:6px 0}.sub{color:var(--muted);font-size:14px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;margin:10px 0;box-shadow:0 4px 15px #00000008}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.cat{border:1px solid var(--line);background:#fff;border-radius:15px;padding:15px;text-align:left;font-weight:800}.ico{font-size:23px;display:block;margin-bottom:7px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:11px;margin:5px 0 10px;font:inherit}textarea{min-height:85px}
+button{border:0;border-radius:11px;padding:12px 14px;font:inherit;font-weight:800}.primary{background:var(--brand)}.dark{background:#111827;color:#fff}.ghost{background:#f1f3f5}.success{background:#dcfce7;color:#166534}.danger{background:#fee2e2;color:#991b1b}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px}.actions{display:flex;gap:7px;flex-wrap:wrap}.pill{font-size:11px;font-weight:800;border-radius:999px;padding:5px 8px;background:#eef2ff;color:#3730a3}.verified{background:#dcfce7;color:#166534}.price{font-size:19px;font-weight:900}.small{font-size:12px;color:var(--muted)}.rating{color:#a16207;font-weight:800}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#fff;border-top:1px solid var(--line);z-index:10}.nav button{background:#fff;border-radius:0;color:#667085;font-size:11px;padding:9px}.nav b{display:block;font-size:18px}.nav .on{color:#111827}
+.modal{position:fixed;inset:0;background:#11182799;display:none;align-items:flex-end;z-index:20}.modal.open{display:flex}.sheet{background:#fff;width:min(480px,100%);padding:18px;border-radius:22px 22px 0 0;max-height:92vh;overflow:auto}
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 15px;border-radius:12px;display:none;z-index:30;font-size:13px}
+.status{margin-top:8px;padding:10px;border-radius:10px;background:#f8fafc}.hidden{display:none}
+</style><style id="koko-ai-v05">
+.ai-card{margin:14px 0;padding:16px;border-radius:18px;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.07)}
+.ai-title{font-weight:800;font-size:18px;margin-bottom:5px}.ai-sub{color:#667085;font-size:13px;line-height:1.45;margin-bottom:12px}
+.ai-row{display:flex;gap:8px}.ai-input{flex:1;border:1px solid #d9dee8;border-radius:14px;padding:12px;font-size:14px;outline:none}
+.ai-btn{border:0;border-radius:14px;padding:12px 14px;font-weight:800;cursor:pointer}.ai-result{margin-top:12px;padding:12px;border-radius:14px;background:#f6f8fb;display:none}
+.ai-tags{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0}.ai-tag{background:#fff;border:1px solid #e1e6ef;padding:6px 9px;border-radius:999px;font-size:12px}
+.ai-question{margin-top:9px;color:#344054;font-size:13px}.ai-confirm{margin-top:10px;width:100%;background:#111827;color:#fff}
+.ai-ask{margin-top:10px;width:100%;background:#eef2ff;color:#27346a}
+</style><style id="koko-v06">
+.k6-card{margin:14px 0;padding:15px;border-radius:18px;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.07)}
+.k6-head{display:flex;justify-content:space-between;align-items:center;gap:10px}.k6-title{font-weight:800}
+.k6-badge{font-size:11px;font-weight:800;padding:6px 9px;border-radius:999px;background:#eef2f6}
+.k6-select{width:100%;margin-top:10px;padding:11px;border:1px solid #d9dee8;border-radius:12px}
+.k6-notif{border:1px solid #e5e7eb;border-radius:13px;padding:11px;margin:8px 0;background:#fff}
+.k6-notif.unread{background:#f4f7ff;border-color:#cfd9ff}.k6-small{font-size:12px;color:#667085}
+</style><style id="koko-v07">
+.k7-card{margin:14px 0;padding:15px;border-radius:18px;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.07)}
+.k7-title{font-weight:800;font-size:17px}.k7-sub{font-size:12px;color:#667085;margin:4px 0 12px}
+.k7-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.k7-btn{border:0;border-radius:13px;padding:11px;font-weight:800}
+.k7-btn input{display:none}.k7-status{font-size:12px;margin-top:9px;color:#475467}
+.k7-preview{width:100%;max-height:220px;object-fit:cover;border-radius:14px;margin-top:10px;display:none}
+</style><style id="koko-v08">
+.k8-card{margin:14px 0;padding:15px;border-radius:18px;background:#fff;box-shadow:0 6px 22px rgba(0,0,0,.07)}
+.k8-title{font-weight:800;font-size:17px}.k8-sub{font-size:12px;color:#667085;margin:4px 0 12px}
+.k8-input,.k8-select{width:100%;padding:11px;border:1px solid #d9dee8;border-radius:12px;margin-top:8px;box-sizing:border-box}
+.k8-btn{border:0;border-radius:13px;padding:12px;font-weight:800;width:100%;margin-top:9px}
+.k8-status{margin-top:10px;font-size:12px;color:#475467}.k8-ok{color:#067647;font-weight:700}
+</style>
+<style>
+.kpro{font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:16px}
+.kpro .hero{padding:18px;border-radius:18px;background:linear-gradient(135deg,#111827,#374151);color:#fff;margin-bottom:14px}
+.kpro .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kpro .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;box-shadow:0 3px 12px #0000000b}
+.kpro .num{font-size:26px;font-weight:800;margin-top:5px}
+.kpro .muted{color:#6b7280;font-size:12px}
+.kpro .tabs{display:flex;gap:8px;overflow:auto;margin:12px 0}
+.kpro button{border:0;border-radius:12px;padding:10px 12px;font-weight:700}
+.kpro .tab{background:#f3f4f6}.kpro .tab.active{background:#111827;color:#fff}
+.kpro .section{margin-top:14px}
+.kpro .row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #eee}
+.kpro .badge{padding:5px 8px;border-radius:999px;background:#eef2ff;font-size:11px;font-weight:700}
+.kpro .cta{background:#111827;color:#fff}
+@media(min-width:720px){.kpro .grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+<style>
+.kadmin{font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:16px;background:#f8fafc}
+.kadmin .hero{padding:18px;border-radius:18px;background:#111827;color:#fff;margin-bottom:14px}
+.kadmin .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kadmin .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;box-shadow:0 3px 12px #0000000b}
+.kadmin .num{font-size:24px;font-weight:800;margin-top:4px}
+.kadmin .muted{color:#6b7280;font-size:12px}
+.kadmin .tabs{display:flex;gap:8px;overflow:auto;margin:12px 0}
+.kadmin button{border:0;border-radius:10px;padding:9px 11px;font-weight:700}
+.kadmin .tab{background:#e5e7eb}.kadmin .tab.active{background:#111827;color:#fff}
+.kadmin .row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #eee}
+.kadmin .badge{padding:5px 8px;border-radius:999px;background:#eef2ff;font-size:11px;font-weight:700}
+@media(min-width:720px){.kadmin .grid{grid-template-columns:repeat(4,1fr)}}
+</style><style>
+.ksec{font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:16px}
+.ksec .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin-bottom:12px}
+.ksec input,.ksec textarea,.ksec select{width:100%;box-sizing:border-box;padding:10px;border:1px solid #d1d5db;border-radius:10px;margin:5px 0 10px}
+.ksec button{border:0;border-radius:10px;padding:10px 13px;font-weight:700}
+.ksec .danger{background:#fee2e2;color:#991b1b}
+.ksec .dark{background:#111827;color:#fff}
+.ksec .badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#f3f4f6;font-size:11px;font-weight:700}
+.ksec .row{padding:10px 0;border-bottom:1px solid #eee}
+</style><style>
+.ksecacct{font-family:system-ui,-apple-system,Segoe UI,sans-serif;padding:16px}
+.ksecacct .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:14px;margin-bottom:12px}
+.ksecacct .row{padding:10px 0;border-bottom:1px solid #eee}
+.ksecacct .badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#eef2ff;font-size:11px;font-weight:700}
+.ksecacct button{border:0;border-radius:10px;padding:9px 12px;font-weight:700}
+.ksecacct .danger{background:#fee2e2;color:#991b1b}
+</style></head><body><div id="koko-v08" class="k8-card">
+<div class="k8-title">💳 Paiement KÔKÔ</div>
+<div class="k8-sub">Prototype sécurisé : choisissez un moyen de paiement et confirmez le montant avant de payer.</div>
+<input id="k8RequestId" class="k8-input" type="number" placeholder="ID de la demande">
+<input id="k8Amount" class="k8-input" type="number" placeholder="Montant en FCFA">
+<select id="k8Method" class="k8-select">
+<option value="SIMULATOR">Mode test — Simulation</option>
+<option value="ORANGE_MONEY_CI">Orange Money CI</option>
+<option value="MTN_CI">MTN CI</option>
+<option value="MOOV_CI">Moov CI</option>
+<option value="WAVE_CI">Wave CI</option>
+<option value="DJAMO_CI">Djamo CI</option>
+<option value="CARD">Carte bancaire</option>
+</select>
+<button class="k8-btn" style="background:#111827;color:#fff" onclick="k8Create()">Créer le paiement</button>
+<div id="k8Status" class="k8-status"></div>
+</div><div id="koko-v07" class="k7-card">
+<div class="k7-title">📷 Preuve photo KÔKÔ</div>
+<div class="k7-sub">Ajoutez une photo AVANT, À L'ARRIVÉE, PENDANT ou APRÈS une intervention.</div>
+<div class="k7-actions">
+<label class="k7-btn">📸 Prendre / choisir<input id="k7Photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="k7Preview(this)"></label>
+<select id="k7Type" class="k7-btn"><option value="BEFORE">AVANT</option><option value="ARRIVAL">ARRIVÉE</option><option value="PROOF">PENDANT</option><option value="AFTER">APRÈS</option></select>
+</div>
+<img id="k7Preview" class="k7-preview">
+<input id="k7Comment" class="k7-status" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;margin-top:9px" placeholder="Commentaire (facultatif)">
+<button class="k7-btn" style="width:100%;margin-top:9px;background:#111827;color:white" onclick="k7Upload()">Envoyer la preuve</button>
+<div id="k7Status" class="k7-status"></div>
+</div><div id="koko-v06" class="k6-card">
+<div class="k6-head"><div class="k6-title">🔔 KÔKÔ Connect</div><span id="k6Count" class="k6-badge">0 notification</span></div>
+<div id="k6ProAvailability" style="display:none"><select id="k6Availability" class="k6-select" onchange="k6SetAvailability(this.value)">
+<option value="AVAILABLE">🟢 Disponible</option><option value="BUSY">🟠 Occupé</option><option value="OFFLINE">⚪ Hors ligne</option>
+</select></div><div id="k6Notifications" style="margin-top:10px"></div></div><div id="koko-ai-v05" class="ai-card">
+<div class="ai-title">🤖 Parlez à KÔKÔ</div>
+<div class="ai-sub">Décrivez simplement votre besoin. KÔKÔ le transforme en demande structurée avant de chercher un professionnel.</div>
+<div class="ai-row"><input id="aiNeed" class="ai-input" placeholder="Ex. J’ai une fuite d’eau à Cocody aujourd’hui"><button class="ai-btn" onclick="kokoStructure()">Analyser</button></div>
+<div id="aiResult" class="ai-result"></div></div>
+<div class="app">
+<header><div class="logo">KÔ<i>KÔ</i></div><div class="tag">Vérifie. Trouve. Achète. Fais.</div></header>
 <main>
-  <div class="card">
-    <h2>Quel service recherchez-vous ?</h2>
-    <textarea id="need" rows="4" placeholder="Ex. Je cherche un professionnel pour refaire l'étanchéité de ma toiture à Cocody."></textarea>
-    <button onclick="analyze()">Continuer</button>
-    <div id="result"></div>
-  </div>
-  <div class="card">
-    <h3>Prototype KÔKÔ</h3>
-    <p>Cette version sert à vérifier le déploiement gratuit sur Render avant de connecter les fonctionnalités avancées.</p>
-    <p><strong>API :</strong> <span id="api">test...</span></p>
-  </div>
+<section id="home" class="screen active">
+<h1>Votre besoin, simplement.</h1><div class="sub">KÔKÔ vous aide à trouver un professionnel et comparer les devis.</div>
+<div class="card"><input id="need" placeholder="Ex. fuite d'eau à Cocody" onkeydown="if(event.key==='Enter')smartNeed()"><button class="primary" style="width:100%" onclick="smartNeed()">🔎 Trouver un professionnel</button></div>
+<h2>Services</h2><div class="grid">
+<button class="cat" onclick="openRequest('Plomberie')">🚰 Plomberie</button><button class="cat" onclick="openRequest('Électricité')">⚡ Électricité</button>
+<button class="cat" onclick="openRequest('Climatisation')">❄️ Climatisation</button><button class="cat" onclick="openRequest('Étanchéité')">🏠 Étanchéité</button>
+<button class="cat" onclick="openRequest('Peinture')">🎨 Peinture</button><button class="cat" onclick="openRequest('Carrelage')">🧱 Carrelage</button>
+</div>
+<div id="loginHint" class="card"><b>Vous n’êtes pas connecté.</b><p class="small">Créez un compte pour envoyer une demande et recevoir des devis.</p><button class="dark" onclick="openAuth()">Créer mon compte</button></div>
+</section>
+
+<section id="requests" class="screen"><h1>Mes demandes</h1><div id="requestsBox"></div></section>
+<section id="pros" class="screen"><h1>Professionnels</h1><div id="prosBox"></div></section>
+<section id="account" class="screen"><div id="accountBox"></div></section>
 </main>
+<div class="nav"><button class="on" onclick="nav('home',this)"><b>⌂</b>Accueil</button><button onclick="nav('requests',this)"><b>▣</b>Demandes</button><button onclick="nav('pros',this)"><b>♙</b>Pros</button><button onclick="nav('account',this)"><b>☻</b>Compte</button></div>
+</div>
+
+<div id="auth" class="modal"><div class="sheet">
+<div class="row"><h2>Compte KÔKÔ</h2><button class="ghost" onclick="closeM('auth')">✕</button></div>
+<div class="actions"><button id="loginTab" class="primary" onclick="authMode('login')">Connexion</button><button id="regTab" class="ghost" onclick="authMode('register')">Inscription</button></div>
+<div id="authFields"></div><button class="dark" style="width:100%" onclick="submitAuth()">Continuer</button>
+</div></div>
+
+<div id="request" class="modal"><div class="sheet">
+<div class="row"><h2>Nouvelle demande</h2><button class="ghost" onclick="closeM('request')">✕</button></div>
+<label>Service</label><select id="rCat"><option>Plomberie</option><option>Électricité</option><option>Climatisation</option><option>Étanchéité</option><option>Peinture</option><option>Carrelage</option></select>
+<label>Votre besoin</label><textarea id="rDesc" placeholder="Décrivez le problème ou le travail à réaliser"></textarea>
+<label>Zone</label><input id="rZone" placeholder="Ex. Cocody Angré">
+<label>Quand ?</label><select id="rTime"><option>Aujourd’hui</option><option>Demain</option><option>Cette semaine</option></select>
+<button class="primary" style="width:100%" onclick="createRequest()">Envoyer la demande</button>
+</div></div>
+
+
+
+<div id="proof" class="modal"><div class="sheet">
+<div class="row"><h2>Preuves & historique</h2><button class="ghost" onclick="closeM('proof')">✕</button></div>
+<div id="proofBox"></div>
+</div></div>
+<div id="profile" class="modal"><div class="sheet">
+<div class="row"><h2 id="profileTitle">Profil professionnel</h2><button class="ghost" onclick="closeM('profile')">✕</button></div>
+<div id="profileBox"></div>
+</div></div>
+<div id="quotes" class="modal"><div class="sheet"><div class="row"><h2>Devis reçus</h2><button class="ghost" onclick="closeM('quotes')">✕</button></div><div id="quotesBox"></div></div></div>
+<div id="toast" class="toast"></div>
+
 <script>
-function analyze(){
-  const need=document.getElementById('need').value.trim();
-  const r=document.getElementById('result');
-  if(!need){r.innerHTML='<p>Décrivez votre besoin.</p>';return;}
-  r.innerHTML='<div class="ok"><strong>Besoin reçu.</strong><br>'+need.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'<br><br>KÔKÔ peut maintenant préparer la recherche de professionnels.</div>';
+const API='/api'; let token=localStorage.getItem('koko_token')||''; let user=JSON.parse(localStorage.getItem('koko_user')||'null'); let authAction='login';
+const $=id=>document.getElementById(id);
+async function api(path,opt={}){opt.headers=Object.assign({'Content-Type':'application/json'},opt.headers||{});if(token)opt.headers.Authorization='Bearer '+token;let r=await fetch(API+path,opt);let d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Erreur serveur');return d}
+function toast(t){$('toast').textContent=t;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2200)}
+function nav(id,b){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('on'));b.classList.add('on');if(id==='requests')loadRequests();if(id==='pros')loadPros();if(id==='account')renderAccount()}
+function openM(id){$(id).classList.add('open')}function closeM(id){$(id).classList.remove('open')}
+function authMode(m){authAction=m;$('loginTab').className=m==='login'?'primary':'ghost';$('regTab').className=m==='register'?'primary':'ghost';$('authFields').innerHTML=m==='login'?`<label>Téléphone</label><input id="aPhone" placeholder="07..."><label>Mot de passe</label><input id="aPass" type="password">`:`<label>Nom</label><input id="aName"><label>Téléphone</label><input id="aPhone"><label>Mot de passe</label><input id="aPass" type="password"><label>Type de compte</label><select id="aRole"><option value="client">Client</option><option value="professional">Professionnel</option></select>`}
+function openAuth(){authMode('login');openM('auth')}
+async function submitAuth(){try{let body={phone:$('aPhone').value,password:$('aPass').value};if(authAction==='register'){body.name=$('aName').value;body.role=$('aRole').value}let d=await api('/auth/'+(authAction==='login'?'login':'register'),{method:'POST',body:JSON.stringify(body)});token=d.token;user=d.user;localStorage.setItem('koko_token',token);localStorage.setItem('koko_user',JSON.stringify(user));closeM('auth');toast('Bienvenue '+user.name);renderAccount()}catch(e){toast(e.message)}}
+function openRequest(cat){if(!token){toast('Créez d’abord votre compte');openAuth();return}$('rCat').value=cat;openM('request')}
+async function createRequest(){try{let d=await api('/requests',{method:'POST',body:JSON.stringify({category:$('rCat').value,description:$('rDesc').value,zone:$('rZone').value,preferred_time:$('rTime').value})});closeM('request');toast('Demande envoyée');navToRequests();}catch(e){toast(e.message)}}
+function navToRequests(){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));$('requests').classList.add('active');loadRequests()}
+async function loadRequests(){
+ if(!token){$('requestsBox').innerHTML='<div class="card">Connectez-vous pour voir vos demandes.</div>';return}
+ try{
+  let rows=await api('/requests');
+  $('requestsBox').innerHTML=rows.length?rows.map(r=>`
+  <div class="card">
+   <div class="row"><b>${r.category}</b><span class="pill">${r.status}</span></div>
+   <p>${r.description}</p><div class="small">📍 ${r.zone} • ${r.preferred_time||''}</div>
+   <div class="actions" style="margin-top:10px">
+    <button class="primary" onclick="loadQuotes(${r.id})">Devis</button>
+    <button class="ghost" onclick="loadProof(${r.id})">Preuves / historique</button>
+   </div>
+  </div>`).join(''):'<div class="card">Aucune demande pour le moment.</div>'
+ }catch(e){toast(e.message)}
 }
-fetch('/health').then(r=>r.json()).then(d=>{
-  document.getElementById('api').textContent=d.ok?'OK — serveur KÔKÔ connecté':'Erreur';
-}).catch(()=>document.getElementById('api').textContent='Non disponible');
+async function loadProof(id){
+ try{
+  let h=await api('/requests/'+id+'/history');
+  let before=h.evidence.filter(x=>x.evidence_type==='BEFORE');
+  let after=h.evidence.filter(x=>x.evidence_type==='AFTER');
+  let other=h.evidence.filter(x=>!['BEFORE','AFTER'].includes(x.evidence_type));
+  const card=x=>`<div class="card"><b>${x.evidence_type}</b><p>${x.note||''}</p>${x.photo_url?`<img src="${x.photo_url}" style="width:100%;border-radius:12px" onerror="this.style.display='none'">`:''}<div class="small">${new Date(x.created_at).toLocaleString('fr-FR')}</div></div>`;
+  $('proofBox').innerHTML=`
+   <div class="card"><b>${h.request.category} — ${h.request.zone}</b><div class="small">Statut : ${h.request.status}</div></div>
+   <h3>📸 Avant intervention</h3>${before.length?before.map(card).join(''):'<div class="card small">Aucune preuve avant enregistrée.</div>'}
+   <h3>🔧 Intervention</h3>${other.length?other.map(card).join(''):'<div class="card small">Aucune preuve intermédiaire.</div>'}
+   <h3>📸 Après intervention</h3>${after.length?after.map(card).join(''):'<div class="card small">Aucune preuve après enregistrée.</div>'}
+   ${h.confirmation?.confirmed?`<div class="card success"><b>✓ Intervention confirmée par le client</b><p>${h.confirmation.comment||''}</p></div>`:
+   `<div class="card"><b>Confirmation client</b><p class="small">Lorsque le travail est terminé, le client peut confirmer la prestation.</p><button class="primary" onclick="confirmWork(${id})">Confirmer la fin de l’intervention</button></div>`}
+   ${user?.role==='professional'?`<div class="card"><b>Ajouter une preuve</b><p class="small">Pour la démonstration, indiquez une URL de photo. Le vrai upload sécurisé viendra ensuite.</p><button class="ghost" onclick="addEvidence(${id},'BEFORE')">Ajouter AVANT</button> <button class="ghost" onclick="addEvidence(${id},'AFTER')">Ajouter APRÈS</button></div>`:''}`;
+  openM('proof');
+ }catch(e){toast(e.message)}
+}
+async function addEvidence(id,type){
+ let url=prompt('URL de la photo (prototype)');
+ let note=prompt('Commentaire');
+ try{await api('/requests/'+id+'/evidence',{method:'POST',body:JSON.stringify({evidence_type:type,photo_url:url||'',note:note||''})});toast('Preuve enregistrée');loadProof(id)}catch(e){toast(e.message)}
+}
+async function confirmWork(id){
+ let c=prompt('Votre commentaire de confirmation (optionnel)');
+ try{await api('/requests/'+id+'/confirm',{method:'POST',body:JSON.stringify({comment:c||''})});toast('Intervention confirmée');loadProof(id);loadRequests()}catch(e){toast(e.message)}
+}
+async function loadQuotes(id){try{let q=await api('/requests/'+id+'/quotes');$('quotesBox').innerHTML=q.length?q.map(x=>`<div class="card"><div class="row"><b>${x.business_name}</b>${x.verified?'<span class="pill verified">✓ Vérifié</span>':''}</div><div class="rating">★ ${x.rating||'Nouveau'}</div><p>${x.message||'Devis proposé par le professionnel.'}</p><div class="row"><span class="price">${Number(x.amount).toLocaleString('fr-FR')} F</span>${x.status==='PENDING'?`<button class="primary" onclick="acceptQuote(${x.id})">Choisir</button>`:`<span class="pill">${x.status}</span>`}</div></div>`).join(''):'<div class="card">Aucun devis reçu pour cette demande.</div>';openM('quotes')}catch(e){toast(e.message)}}
+async function acceptQuote(id){try{await api('/quotes/'+id+'/accept',{method:'POST'});closeM('quotes');toast('Devis accepté');loadRequests()}catch(e){toast(e.message)}}
+async function loadPros(){
+ try{
+  let p=await api('/professionals');
+  $('prosBox').innerHTML=p.length?p.map(x=>`
+  <div class="card">
+   <div class="row"><div><b>${x.business_name}</b><div class="small">${x.category} • ${x.zone}</div></div>
+   ${x.verified?'<span class="pill verified">✓ KÔKÔ Vérifié</span>':'<span class="pill">Vérification en cours</span>'}</div>
+   <p class="rating">★ ${x.rating||'Nouveau'} ${x.review_count?'• '+x.review_count+' avis':''}</p>
+   <p>${x.description||'Professionnel référencé sur KÔKÔ.'}</p>
+   <button class="ghost" onclick="openProfile(${x.id})">Voir la fiche complète</button>
+  </div>`).join(''):'<div class="card">Les premiers professionnels apparaîtront ici.</div>'
+ }catch(e){toast(e.message)}
+}
+async function openProfile(id){
+ try{
+  let p=await api('/professionals/'+id);
+  $('profileTitle').textContent=p.business_name;
+  $('profileBox').innerHTML=`
+  <div class="card"><div class="row"><b>${p.category}</b>${p.verified?'<span class="pill verified">✓ Vérifié</span>':'<span class="pill">En vérification</span>'}</div>
+  <p class="small">📍 ${p.zone} • ${p.phone||''}</p><p>${p.description||''}</p><p class="rating">★ ${p.rating||'Nouveau'} ${p.review_count?'• '+p.review_count+' avis':''}</p></div>
+  <h3>Réalisations</h3>
+  ${(p.projects||[]).length?p.projects.map(x=>`<div class="card"><b>${x.title}</b><div class="small">${x.category||''}</div><p>${x.description||''}</p>${x.photo_url?`<img src="${x.photo_url}" style="width:100%;border-radius:12px" onerror="this.style.display='none'">`:''}</div>`).join(''):'<div class="card small">Aucune réalisation publiée pour le moment.</div>'}
+  <h3>Avis clients</h3>
+  ${(p.reviews||[]).length?p.reviews.map(x=>`<div class="card"><div class="rating">★ ${x.rating}/5</div><p>${x.comment||'Avis sans commentaire.'}</p><div class="small">${x.client_name||'Client KÔKÔ'}</div></div>`).join(''):'<div class="card small">Pas encore d’avis.</div>'}`;
+  openM('profile')
+ }catch(e){toast(e.message)}
+}
+function renderAccount(){if(!user){$('accountBox').innerHTML='<h1>Mon compte</h1><div class="card">Vous n’êtes pas connecté.</div><button class="dark" onclick="openAuth()">Créer un compte / Se connecter</button>';return}$('accountBox').innerHTML=`<h1>Mon compte</h1><div class="card"><b>${user.name}</b><p class="small">${user.phone} • ${user.role}</p></div>${user.role==='professional'?'<div class="card"><h3>KÔKÔ PRO</h3><p class="small">Créez votre profil, déclarez vos justificatifs et ajoutez vos réalisations. KÔKÔ pourra ensuite afficher le badge de vérification après contrôle.</p><button class="primary" onclick="professionalProfile()">Créer mon profil pro</button></div>':''}<button class="ghost" onclick="logout()">Se déconnecter</button>`}
+async function professionalProfile(){
+ if(!user||user.role!=='professional'){toast('Connectez-vous avec un compte professionnel');return}
+ let business=prompt('Nom de votre activité');
+ let cat=prompt('Catégorie principale (ex. Plomberie)');
+ let zone=prompt('Zone d’intervention (ex. Cocody)');
+ let desc=prompt('Description courte');
+ if(!business||!cat||!zone)return;
+ try{
+  await api('/professionals',{method:'POST',body:JSON.stringify({business_name:business,category:cat,zone,description:desc||''})});
+  toast('Profil créé. Ajoutez maintenant vos justificatifs.');
+  setTimeout(()=>professionalTrust(),500);
+ }catch(e){toast(e.message)}
+}
+async function professionalTrust(){
+ let type=prompt('Document à déclarer : CNI / RCCM / Autre');
+ if(!type)return;
+ let ref=prompt('Référence ou numéro du document (ne saisissez pas de données sensibles ici en démonstration)');
+ try{
+  await api('/professional/documents',{method:'POST',body:JSON.stringify({document_type:type,document_ref:ref||''})});
+  toast('Document enregistré pour vérification KÔKÔ');
+  let title=prompt('Ajoutez une réalisation : titre du chantier');
+  if(title){
+    let desc=prompt('Description de la réalisation');
+    await api('/professional/projects',{method:'POST',body:JSON.stringify({title,description:desc||'',category:''})});
+  }
+  toast('Profil enrichi. Statut : vérification en cours.');
+ }catch(e){toast(e.message)}
+}
+function logout(){token='';user=null;localStorage.removeItem('koko_token');localStorage.removeItem('koko_user');toast('Déconnecté');renderAccount()}
+function smartNeed(){let n=$('need').value.trim();if(!n){toast('Décrivez votre besoin');return}if(!token){toast('Connectez-vous pour continuer');openAuth();return}openRequest('Autre');$('rDesc').value=n}
+authMode('login');renderAccount();
 </script>
-</body>
-</html>
+<script id="koko-ai-v05-js">
+let kokoAiDraft=null;
+async function kokoStructure(){
+ const input=document.getElementById('aiNeed'),box=document.getElementById('aiResult'),text=input.value.trim();
+ if(!text){box.style.display='block';box.innerHTML='<b>Décrivez votre besoin.</b>';return;}
+ box.style.display='block';box.innerHTML='Analyse de votre besoin…';
+ try{
+  const r=await fetch('/api/ai/structure',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+  const d=await r.json(); if(!r.ok) throw new Error(d.error||'Erreur');
+  kokoAiDraft=d.result;
+  const tags=[['Service',d.result.category||'À préciser'],['Zone',d.result.location||'À préciser'],['Urgence',d.result.urgency],['Moment',d.result.timing||'À préciser']];
+  if(d.result.budget) tags.push(['Budget',d.result.budget]);
+  let out='<b>Voici ce que KÔKÔ a compris :</b><div class="ai-tags">';
+  for(const [k,v] of tags) out+=`<span class="ai-tag"><b>${k} :</b> ${v}</span>`;
+  out+='</div><div><b>Besoin :</b> '+escapeHtml(d.result.problem)+'</div>';
+  if(d.result.nextAction==='confirm') out+='<button class="ai-btn ai-confirm" onclick="kokoConfirmAi()">✓ Confirmer et créer la demande</button>';
+  else out+='<div class="ai-question"><b>Il me manque :</b> '+d.result.questions.join(' ')+'</div><button class="ai-btn ai-ask" onclick="document.getElementById(\'aiNeed\').focus()">Compléter ma demande</button>';
+  box.innerHTML=out;
+ }catch(e){box.innerHTML='<b>Impossible d’analyser pour le moment.</b><br>'+escapeHtml(e.message);}
+}
+async function kokoConfirmAi(){
+ const token=localStorage.getItem('token'); if(!token){alert('Connectez-vous d’abord pour créer la demande.');return;}
+ const d=kokoAiDraft,payload={service:d.category,description:d.problem,location:d.location,scheduled_at:d.timing,budget:d.budget};
+ try{
+  const r=await fetch('/api/requests',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(payload)});
+  const x=await r.json(); if(!r.ok) throw new Error(x.error||'Création impossible');
+  document.getElementById('aiResult').innerHTML='<b>✓ Demande créée.</b><br>KÔKÔ peut maintenant rechercher les professionnels correspondants.';
+  if(typeof loadRequests==='function') loadRequests();
+ }catch(e){alert(e.message);}
+}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));}
+</script><script id="koko-v06-js">
+async function k6Init(){
+ const token=localStorage.getItem('token'); if(!token)return;
+ const role=localStorage.getItem('role')||'';
+ if(role==='professional'){document.getElementById('k6ProAvailability').style.display='block';
+  try{const r=await fetch('/api/pro/availability',{headers:{Authorization:'Bearer '+token}});const d=await r.json();if(d.availability)document.getElementById('k6Availability').value=d.availability;}catch(e){}}
+ k6LoadNotifications();
+}
+async function k6SetAvailability(v){const token=localStorage.getItem('token');if(!token)return;
+ try{await fetch('/api/pro/availability',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({availability:v})});}catch(e){}}
+async function k6LoadNotifications(){const token=localStorage.getItem('token');if(!token)return;
+ try{const r=await fetch('/api/notifications',{headers:{Authorization:'Bearer '+token}});const rows=await r.json();
+ const unread=rows.filter(x=>!x.read).length;document.getElementById('k6Count').textContent=unread+' notification'+(unread>1?'s':'');
+ const box=document.getElementById('k6Notifications');if(!rows.length){box.innerHTML='<div class="k6-small">Aucune notification pour le moment.</div>';return;}
+ box.innerHTML=rows.slice(0,8).map(n=>`<div class="k6-notif ${n.read?'':'unread'}" onclick="k6Read(${n.id})"><b>${escapeHtml(n.title)}</b><br><span class="k6-small">${escapeHtml(n.message)}</span></div>`).join('');
+ }catch(e){}}
+async function k6Read(id){const token=localStorage.getItem('token');if(!token)return;
+ await fetch('/api/notifications/'+id+'/read',{method:'POST',headers:{Authorization:'Bearer '+token}});k6LoadNotifications();}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',k6Init);else k6Init();
+setInterval(k6LoadNotifications,30000);
+</script><script id="koko-v07-js">
+function k7Preview(input){
+ const img=document.getElementById('k7Preview'); if(!input.files[0])return;
+ img.src=URL.createObjectURL(input.files[0]); img.style.display='block';
+}
+async function k7Upload(){
+ const token=localStorage.getItem('token'), req=window.currentRequestId||localStorage.getItem('kokoCurrentRequestId');
+ const file=document.getElementById('k7Photo').files[0], status=document.getElementById('k7Status');
+ if(!token){status.textContent='Connectez-vous d’abord.';return}
+ if(!req){status.textContent='Ouvrez d’abord une intervention.';return}
+ if(!file){status.textContent='Choisissez une photo.';return}
+ if(file.size>8*1024*1024){status.textContent='Photo trop volumineuse (8 Mo max).';return}
+ const fd=new FormData(); fd.append('photo',file); fd.append('type',document.getElementById('k7Type').value); fd.append('comment',document.getElementById('k7Comment').value);
+ status.textContent='Envoi…';
+ try{
+  const r=await fetch('/api/requests/'+req+'/evidence/upload',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});
+  const d=await r.json(); if(!r.ok)throw new Error(d.error||'Échec');
+  status.textContent='✓ Preuve enregistrée.';
+  document.getElementById('k7Photo').value=''; document.getElementById('k7Preview').style.display='none';
+ }catch(e){status.textContent='Erreur : '+e.message}
+}
+</script><script id="koko-v08-js">
+let k8PaymentId=null;
+async function k8Create(){
+ const token=localStorage.getItem('token'),status=document.getElementById('k8Status');
+ if(!token){status.textContent='Connectez-vous d’abord.';return;}
+ const request_id=Number(document.getElementById('k8RequestId').value),amount=Number(document.getElementById('k8Amount').value),method=document.getElementById('k8Method').value;
+ if(!request_id||!amount||amount<=0){status.textContent='Renseignez la demande et le montant.';return;}
+ status.textContent='Création du paiement…';
+ try{
+  const r=await fetch('/api/payments/create',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({request_id,amount,method})});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||'Erreur');
+  k8PaymentId=d.payment_id;
+  status.innerHTML='✓ Paiement créé — référence <b>'+d.reference+'</b><br>'+d.message;
+  if(method==='SIMULATOR'){
+   const b=document.createElement('button');b.className='k8-btn';b.textContent='✓ Simuler un paiement réussi';b.onclick=k8Simulate;b.style.background='#e8f7ee';status.appendChild(b);
+  } else {
+   status.innerHTML += '<br><span>Le connecteur réel sera activé après configuration du prestataire.</span>';
+  }
+ }catch(e){status.textContent='Erreur : '+e.message;}
+}
+async function k8Simulate(){
+ const token=localStorage.getItem('token'),status=document.getElementById('k8Status');
+ const r=await fetch('/api/payments/'+k8PaymentId+'/simulate-success',{method:'POST',headers:{Authorization:'Bearer '+token}});
+ const d=await r.json(); if(d.success)status.innerHTML+='<br><span class="k8-ok">✓ Paiement confirmé en simulation.</span>';
+}
+</script>
+<!-- KÔKÔ V0.9 — comparaison des devis -->
+<section id="koko-v09-quotes" style="margin:18px 0;padding:16px;border:1px solid #e5e7eb;border-radius:18px;background:#fff">
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+    <div>
+      <strong style="font-size:18px">⚖️ Comparer les devis</strong>
+      <div style="font-size:13px;color:#667085;margin-top:4px">Prix, délai, vérification et avis — vous décidez.</div>
+    </div>
+    <button onclick="kokoV09Compare()" style="border:0;border-radius:12px;padding:10px 14px;background:#111827;color:white">Comparer</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <input id="koko-v09-request-id" type="number" min="1" placeholder="ID de la demande" style="flex:1;padding:11px;border:1px solid #d0d5dd;border-radius:10px">
+  </div>
+  <div id="koko-v09-result" style="margin-top:14px;color:#667085;font-size:14px">
+    Entrez un ID de demande pour afficher les offres.
+  </div>
+</section>
+<script>
+async function kokoV09Compare(){
+  const id=document.getElementById('koko-v09-request-id').value;
+  const out=document.getElementById('koko-v09-result');
+  if(!id){out.textContent='Indiquez un ID de demande.';return;}
+  try{
+    const token=localStorage.getItem('koko_token') || localStorage.getItem('token');
+    const r=await fetch('/api/requests/'+id+'/quotes/compare',{
+      headers: token ? {'Authorization':'Bearer '+token} : {}
+    });
+    const data=await r.json();
+    if(!r.ok){out.textContent=data.error||'Impossible de charger les devis.';return;}
+    if(!data.quotes || !data.quotes.length){
+      out.innerHTML='<div style="padding:12px;background:#f8fafc;border-radius:12px">Aucun devis reçu pour le moment.</div>';
+      return;
+    }
+    out.innerHTML=data.quotes.map(q=>{
+      const verified=q.verified ? '✓ KÔKÔ Vérifié' : 'Non vérifié';
+      const rating=q.rating ? '⭐ '+Number(q.rating).toFixed(1) : 'Pas encore noté';
+      const days=q.estimated_days!=null ? q.estimated_days+' jour(s)' : 'Délai non précisé';
+      const price=Number(q.price||0).toLocaleString('fr-FR')+' FCFA';
+      return `<article style="padding:13px;margin:9px 0;border:1px solid #e5e7eb;border-radius:14px">
+        <div style="display:flex;justify-content:space-between;gap:8px"><strong>${q.company_name||q.professional_name||'Professionnel'}</strong><b>${price}</b></div>
+        <div style="font-size:13px;color:#667085;margin-top:5px">${verified} · ${rating} · ${days}</div>
+        <div style="font-size:12px;margin-top:7px;color:#475467">Statut : ${q.status||'PENDING'}</div>
+      </article>`;
+    }).join('');
+  }catch(e){out.textContent='Erreur de connexion.';}
+}
+</script>
+
+
+<!-- KÔKÔ V1.0 — suivi d'intervention -->
+<section id="koko-v10-intervention" style="margin:18px 0;padding:16px;border:1px solid #e5e7eb;border-radius:18px;background:#fff">
+  <div>
+    <strong style="font-size:18px">🛠️ Suivi de l’intervention</strong>
+    <div style="font-size:13px;color:#667085;margin-top:4px">De la planification à la validation finale.</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <input id="koko-v10-intervention-id" type="number" min="1" placeholder="ID intervention" style="flex:1;padding:11px;border:1px solid #d0d5dd;border-radius:10px">
+    <button onclick="kokoV10Load()" style="border:0;border-radius:12px;padding:10px 14px;background:#111827;color:white">Suivre</button>
+  </div>
+  <div id="koko-v10-result" style="margin-top:14px"></div>
+</section>
+<script>
+async function kokoV10Load(){
+ const id=document.getElementById('koko-v10-intervention-id').value, out=document.getElementById('koko-v10-result');
+ if(!id){out.textContent='Indiquez un ID.';return;}
+ try{
+  const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+  const r=await fetch('/api/interventions/'+id,{headers:token?{'Authorization':'Bearer '+token}:{}});
+  const d=await r.json();
+  if(!r.ok){out.textContent=d.error||'Impossible de charger.';return;}
+  const steps=[
+   ['SCHEDULED','📅','Planifiée'],
+   ['ON_ROUTE','🚗','En route'],
+   ['ARRIVED','📍','Arrivé'],
+   ['IN_PROGRESS','🔧','Travaux en cours'],
+   ['COMPLETED','🏁','Travaux terminés'],
+   ['VALIDATED','✅','Validé par le client']
+  ];
+  const rank={'SCHEDULED':0,'ON_ROUTE':1,'ARRIVED':2,'IN_PROGRESS':3,'COMPLETED':4,'AWAITING_CONFIRMATION':4,'VALIDATED':5};
+  const current=rank[d.intervention.status]??0;
+  out.innerHTML='<div style="padding:12px;background:#f8fafc;border-radius:14px"><b>'+ (d.intervention.company_name||d.intervention.professional_name||'Professionnel') +'</b>'+
+    '<div style="font-size:13px;color:#667085;margin-top:4px">Statut actuel : '+d.intervention.status+'</div></div>'+
+    '<div style="margin-top:12px">'+steps.map((s,i)=>{
+      const active=i<=current?'✓':'○';
+      return '<div style="display:flex;gap:10px;align-items:center;padding:9px 0"><span style="font-size:18px">'+active+'</span><span>'+s[1]+' '+s[2]+'</span></div>';
+    }).join('')+'</div>'+
+    '<div style="font-size:12px;color:#667085;margin-top:8px">Les événements sont conservés pour la traçabilité.</div>';
+ }catch(e){out.textContent='Erreur de connexion.';}
+}
+</script>
+
+
+<!-- KÔKÔ V1.1 — géolocalisation -->
+<section id="koko-v11-geo" style="margin:18px 0;padding:16px;border:1px solid #e5e7eb;border-radius:18px;background:#fff">
+  <div>
+    <strong style="font-size:18px">📍 Professionnels à proximité</strong>
+    <div style="font-size:13px;color:#667085;margin-top:4px">KÔKÔ peut utiliser votre position pour rechercher les professionnels proches.</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+    <button onclick="kokoV11Locate()" style="border:0;border-radius:12px;padding:10px 14px;background:#111827;color:#fff">Utiliser ma position</button>
+    <select id="koko-v11-radius" style="padding:10px;border:1px solid #d0d5dd;border-radius:10px">
+      <option value="5">5 km</option><option value="10">10 km</option><option value="15" selected>15 km</option><option value="25">25 km</option>
+    </select>
+  </div>
+  <div id="koko-v11-result" style="margin-top:14px;color:#667085;font-size:14px"></div>
+</section>
+<script>
+async function kokoV11Locate(){
+ const out=document.getElementById('koko-v11-result');
+ if(!navigator.geolocation){out.textContent='La géolocalisation n’est pas disponible sur cet appareil.';return;}
+ out.textContent='Localisation en cours…';
+ navigator.geolocation.getCurrentPosition(async pos=>{
+  const lat=pos.coords.latitude, lon=pos.coords.longitude;
+  const radius=document.getElementById('koko-v11-radius').value;
+  try{
+   const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+   const headers=token?{'Authorization':'Bearer '+token,'Content-Type':'application/json'}:{'Content-Type':'application/json'};
+   if(token) await fetch('/api/me/location',{method:'POST',headers,body:JSON.stringify({latitude:lat,longitude:lon})});
+   const r=await fetch('/api/professionals/nearby?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lon)+'&radius_km='+radius,{headers});
+   const d=await r.json();
+   if(!r.ok){out.textContent=d.error||'Recherche impossible.';return;}
+   if(!d.professionals.length){out.innerHTML='<div style="padding:12px;background:#f8fafc;border-radius:12px">Aucun professionnel géolocalisé dans ce rayon pour le moment.</div>';return;}
+   out.innerHTML=d.professionals.slice(0,10).map(p=>{
+     const verified=p.verified?'✓ KÔKÔ Vérifié':'';
+     return '<div style="padding:12px;margin:8px 0;border:1px solid #e5e7eb;border-radius:12px"><b>'+
+       (p.company_name||p.professional_name||'Professionnel')+'</b><div style="font-size:13px;color:#667085;margin-top:4px">'+
+       (p.category||'Service')+' · '+p.distance_km+' km · '+verified+'</div></div>';
+   }).join('');
+  }catch(e){out.textContent='Erreur de connexion.';}
+ },()=>{out.textContent='Position non obtenue. Vérifiez l’autorisation de localisation.'},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});
+}
+</script>
+
+
+<!-- KÔKÔ V1.2 — messagerie -->
+<section id="koko-v12-chat" style="margin:18px 0;padding:16px;border:1px solid #e5e7eb;border-radius:18px;background:#fff">
+  <div>
+    <strong style="font-size:18px">💬 Messagerie KÔKÔ</strong>
+    <div style="font-size:13px;color:#667085;margin-top:4px">Échangez avec le professionnel au sujet de la demande.</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <input id="koko-v12-chat-id" type="number" min="1" placeholder="ID conversation" style="flex:1;padding:11px;border:1px solid #d0d5dd;border-radius:10px">
+    <button onclick="kokoV12Load()" style="border:0;border-radius:12px;padding:10px 14px;background:#111827;color:#fff">Ouvrir</button>
+  </div>
+  <div id="koko-v12-messages" style="margin-top:12px;max-height:320px;overflow:auto"></div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <input id="koko-v12-body" placeholder="Écrire un message…" style="flex:1;padding:11px;border:1px solid #d0d5dd;border-radius:10px">
+    <button onclick="kokoV12Send()" style="border:0;border-radius:12px;padding:10px 14px;background:#111827;color:#fff">Envoyer</button>
+  </div>
+</section>
+<script>
+async function kokoV12Load(){
+ const id=document.getElementById('koko-v12-chat-id').value, box=document.getElementById('koko-v12-messages');
+ if(!id){box.textContent='Indiquez un ID de conversation.';return;}
+ try{
+  const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+  const r=await fetch('/api/conversations/'+id+'/messages',{headers:token?{'Authorization':'Bearer '+token}:{}});
+  const d=await r.json();
+  if(!r.ok){box.textContent=d.error||'Impossible de charger.';return;}
+  box.innerHTML=(d||[]).map(m=>'<div style="padding:9px;margin:7px 0;border-radius:12px;background:#f8fafc"><div style="font-size:13px">'+
+    (m.body||'📷 Photo')+'</div><div style="font-size:11px;color:#98a2b3;margin-top:4px">'+
+    new Date(m.created_at).toLocaleString('fr-FR')+(m.read_at?' · lu':'')+'</div></div>').join('')||'<div style="color:#667085">Aucun message.</div>';
+  box.scrollTop=box.scrollHeight;
+ }catch(e){box.textContent='Erreur de connexion.';}
+}
+async function kokoV12Send(){
+ const id=document.getElementById('koko-v12-chat-id').value, input=document.getElementById('koko-v12-body');
+ const body=input.value.trim(); if(!id||!body)return;
+ try{
+  const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+  const r=await fetch('/api/conversations/'+id+'/messages',{method:'POST',
+    headers:{'Content-Type':'application/json',...(token?{'Authorization':'Bearer '+token}:{})},
+    body:JSON.stringify({body})});
+  if(r.ok){input.value='';kokoV12Load();} else {const d=await r.json();alert(d.error||'Envoi impossible');}
+ }catch(e){alert('Erreur de connexion.');}
+}
+</script>
+
+
+<!-- KÔKÔ V1.3 — centre de notifications -->
+<section id="koko-v13-notifications" style="margin:18px 0;padding:16px;border:1px solid #e5e7eb;border-radius:18px;background:#fff">
+  <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+    <div>
+      <strong style="font-size:18px">🔔 Notifications</strong>
+      <div id="koko-v13-count" style="font-size:13px;color:#667085;margin-top:4px">Chargement…</div>
+    </div>
+    <button onclick="kokoV13ReadAll()" style="border:1px solid #d0d5dd;background:#fff;border-radius:10px;padding:8px 11px">Tout lire</button>
+  </div>
+  <div id="koko-v13-list" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoV13Load(){
+ try{
+  const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+  const r=await fetch('/api/notifications?limit=50',{headers:token?{'Authorization':'Bearer '+token}:{}});
+  const d=await r.json();
+  if(!r.ok)return;
+  document.getElementById('koko-v13-count').textContent=d.unread+' notification(s) non lue(s)';
+  const box=document.getElementById('koko-v13-list');
+  box.innerHTML=(d.notifications||[]).map(n=>
+   '<div onclick="kokoV13Read('+n.id+')" style="padding:12px;margin:7px 0;border-radius:12px;border:1px solid #e5e7eb;background:'+
+   (n.read_at?'#fff':'#f8fafc')+';cursor:pointer"><b>'+n.title+'</b><div style="font-size:13px;color:#475467;margin-top:4px">'+n.body+
+   '</div><div style="font-size:11px;color:#98a2b3;margin-top:5px">'+new Date(n.created_at).toLocaleString('fr-FR')+
+   (n.read_at?'':' · non lue')+'</div></div>'
+  ).join('')||'<div style="color:#667085">Aucune notification.</div>';
+ }catch(e){}
+}
+async function kokoV13Read(id){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+ await fetch('/api/notifications/'+id+'/read',{method:'POST',headers:token?{'Authorization':'Bearer '+token}:{}});
+ kokoV13Load();
+}
+async function kokoV13ReadAll(){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+ await fetch('/api/notifications/read-all',{method:'POST',headers:token?{'Authorization':'Bearer '+token}:{}});
+ kokoV13Load();
+}
+kokoV13Load();
+setInterval(kokoV13Load,30000);
+</script>
+
+
+<div id="kokoProDashboard" class="kpro" style="display:none">
+  <div class="hero">
+    <div class="muted" style="color:#d1d5db">KÔKÔ PRO</div>
+    <h2 id="proWelcome" style="margin:4px 0">Mon activité</h2>
+    <div id="proAvailability" class="muted" style="color:#e5e7eb">Disponibilité : —</div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="muted">Devis en attente</div><div class="num" id="kpiPending">0</div></div>
+    <div class="card"><div class="muted">Devis acceptés</div><div class="num" id="kpiAccepted">0</div></div>
+    <div class="card"><div class="muted">Interventions actives</div><div class="num" id="kpiActive">0</div></div>
+    <div class="card"><div class="muted">Revenus confirmés</div><div class="num" id="kpiRevenue">0 F</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="proTab('activity',this)">Activité</button>
+    <button class="tab" onclick="proTab('requests',this)">Demandes</button>
+    <button class="tab" onclick="proTab('calendar',this)">Planning</button>
+    <button class="tab" onclick="proTab('reputation',this)">Réputation</button>
+  </div>
+
+  <div id="proPanel" class="section"></div>
+</div>
+
+<script>
+const KPRO_API = window.KOKO_API || localStorage.getItem('koko_api') || '';
+async function kproFetch(path, opts={}) {
+  const token=localStorage.getItem('koko_token') || localStorage.getItem('token');
+  const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+  if(token) headers.Authorization='Bearer '+token;
+  const r=await fetch(KPRO_API+path,Object.assign({},opts,{headers}));
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(d.error||'Erreur');
+  return d;
+}
+function kokoShowProDashboard(){
+  const el=document.getElementById('kokoProDashboard');
+  if(!el) return;
+  el.style.display='block';
+  loadProDashboard();
+}
+async function loadProDashboard(){
+  try{
+    const d=await kproFetch('/api/pro/dashboard');
+    document.getElementById('proWelcome').textContent='Bonjour, '+(d.professional?.name||'Professionnel');
+    document.getElementById('kpiPending').textContent=d.kpis.pendingQuotes;
+    document.getElementById('kpiAccepted').textContent=d.kpis.acceptedQuotes;
+    document.getElementById('kpiActive').textContent=d.kpis.activeInterventions;
+    document.getElementById('kpiRevenue').textContent=(d.kpis.revenueXof||0).toLocaleString('fr-FR')+' F';
+    document.getElementById('proAvailability').textContent='Disponibilité : '+(d.professional?.availability||'—')+
+      ' · Note '+Number(d.kpis.rating||0).toFixed(1)+'/5 ('+d.kpis.reviewCount+' avis)';
+    renderProActivity(d);
+  }catch(e){document.getElementById('proPanel').innerHTML='<div class="card">Connectez-vous avec un compte KÔKÔ PRO pour accéder au tableau de bord.</div>'}
+}
+function renderProActivity(d){
+  const items=d.recent||[];
+  document.getElementById('proPanel').innerHTML='<div class="card"><h3>Dernières activités</h3>'+
+    (items.length?items.map(x=>`<div class="row"><div><b>${x.title||'Demande'}</b><div class="muted">${x.category||''} · ${x.zone||''}</div></div><span class="badge">${x.status}</span></div>`).join(''):'<div class="muted">Aucune activité récente.</div>')+
+    '<div style="margin-top:12px"><b>Messages non lus :</b> '+d.kpis.unreadMessages+' · <b>Notifications :</b> '+d.kpis.unreadNotifications+'</div></div>';
+}
+async function proTab(tab,btn){
+  document.querySelectorAll('#kokoProDashboard .tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const p=document.getElementById('proPanel');
+  try{
+    if(tab==='activity'){await loadProDashboard();return}
+    if(tab==='requests'){
+      const rows=await kproFetch('/api/pro/requests');
+      p.innerHTML='<div class="card"><h3>Nouvelles demandes</h3>'+
+        (rows.length?rows.map(r=>`<div class="row"><div><b>${r.title||r.category}</b><div class="muted">${r.zone||'Zone non précisée'} · ${r.quote_count} devis</div></div><button class="cta" onclick="proRespond(${r.id})">Répondre</button></div>`).join(''):'<div class="muted">Aucune nouvelle demande correspondant à vos services.</div>')+'</div>';
+    }
+    if(tab==='calendar'){
+      const rows=await kproFetch('/api/pro/calendar');
+      p.innerHTML='<div class="card"><h3>Planning des interventions</h3>'+
+        (rows.length?rows.map(i=>`<div class="row"><div><b>${i.title||i.category}</b><div class="muted">${i.scheduled_at||'Date à planifier'} · ${i.zone||''}</div></div><span class="badge">${i.status}</span></div>`).join(''):'<div class="muted">Aucune intervention planifiée.</div>')+'</div>';
+    }
+    if(tab==='reputation'){
+      const d=await kproFetch('/api/pro/reputation');
+      p.innerHTML='<div class="card"><h3>Réputation</h3><div class="num">'+Number(d.stats.avg_rating||0).toFixed(1)+'/5</div><div class="muted">'+d.stats.count+' avis clients</div>'+
+        (d.reviews||[]).map(r=>`<div class="row"><div><b>${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</b><div>${r.comment||'Sans commentaire'}</div><div class="muted">${r.client_name||'Client'} · ${r.created_at||''}</div></div></div>`).join('')+'</div>';
+    }
+  }catch(e){p.innerHTML='<div class="card">Impossible de charger cette section : '+e.message+'</div>'}
+}
+function proRespond(id){
+  alert('Demande #'+id+' : ouvrez le détail de la demande pour envoyer votre devis.');
+}
+</script>
+<div id="kokoAdminDashboard" class="kadmin" style="display:none">
+<div class="hero"><div style="font-size:12px;opacity:.7">KÔKÔ ADMIN</div><h2 style="margin:5px 0">Centre de contrôle</h2><div style="font-size:12px;opacity:.8">Confiance · activité · paiements · litiges</div></div>
+<div class="grid">
+<div class="card"><div class="muted">Utilisateurs</div><div id="adUsers" class="num">0</div></div>
+<div class="card"><div class="muted">Professionnels</div><div id="adPros" class="num">0</div></div>
+<div class="card"><div class="muted">Vérifiés</div><div id="adVerified" class="num">0</div></div>
+<div class="card"><div class="muted">Documents à contrôler</div><div id="adDocs" class="num">0</div></div>
+<div class="card"><div class="muted">Demandes actives</div><div id="adRequests" class="num">0</div></div>
+<div class="card"><div class="muted">Interventions</div><div id="adInterventions" class="num">0</div></div>
+<div class="card"><div class="muted">Litiges</div><div id="adDisputes" class="num">0</div></div>
+<div class="card"><div class="muted">Volume payé confirmé</div><div id="adVolume" class="num">0 F</div></div>
+</div>
+<div class="tabs">
+<button class="tab active" onclick="adminTab('pros',this)">Professionnels</button>
+<button class="tab" onclick="adminTab('docs',this)">Documents</button>
+<button class="tab" onclick="adminTab('disputes',this)">Litiges</button>
+<button class="tab" onclick="adminTab('finance',this)">Finance</button>
+</div>
+<div id="adminPanel" class="card"></div>
+</div>
+<script>
+const KADMIN_API=window.KOKO_API||localStorage.getItem('koko_api')||'';
+async function adminFetch(path,opts={}){const token=localStorage.getItem('koko_token')||localStorage.getItem('token');const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});if(token)headers.Authorization='Bearer '+token;const r=await fetch(KADMIN_API+path,Object.assign({},opts,{headers}));const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Erreur');return d;}
+async function loadAdminDashboard(){const el=document.getElementById('kokoAdminDashboard');if(!el)return;el.style.display='block';try{const d=await adminFetch('/api/admin/dashboard'),k=d.kpis;adUsers.textContent=k.users;adPros.textContent=k.pros;adVerified.textContent=k.verified;adDocs.textContent=k.pendingDocs;adRequests.textContent=k.activeRequests;adInterventions.textContent=k.interventions;adDisputes.textContent=k.disputes;adVolume.textContent=(k.volumeXof||0).toLocaleString('fr-FR')+' F';adminTab('pros',document.querySelector('#kokoAdminDashboard .tab'));}catch(e){document.getElementById('adminPanel').innerHTML='Accès administrateur requis.';}}
+async function adminTab(tab,btn){document.querySelectorAll('#kokoAdminDashboard .tab').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');const p=document.getElementById('adminPanel');try{
+if(tab==='pros'){const rows=await adminFetch('/api/admin/professionals');p.innerHTML='<h3>Professionnels</h3>'+(rows.length?rows.map(x=>`<div class="row"><div><b>${x.name||x.user_name}</b><div class="muted">${x.user_email||''} · Note ${Number(x.rating||0).toFixed(1)}/5 · ${x.review_count} avis</div></div><button onclick="adminVerify(${x.id},${x.verified?0:1})">${x.verified?'Retirer vérification':'Vérifier'}</button></div>`).join(''):'<div class="muted">Aucun professionnel.</div>');}
+else if(tab==='docs'){const rows=await adminFetch('/api/admin/documents');p.innerHTML='<h3>Contrôle des documents</h3>'+(rows.length?rows.map(x=>`<div class="row"><div><b>${x.professional_name}</b><div class="muted">${x.type||'Document'} · ${x.status}</div></div><span><button onclick="reviewDoc(${x.id},'APPROVED')">✓</button> <button onclick="reviewDoc(${x.id},'REJECTED')">✕</button></span></div>`).join(''):'<div class="muted">Aucun document.</div>');}
+else if(tab==='disputes'){const rows=await adminFetch('/api/admin/disputes');p.innerHTML='<h3>Litiges</h3>'+(rows.length?rows.map(x=>`<div class="row"><div><b>#${x.id} ${x.title||x.category}</b><div class="muted">${x.client_name||'Client'} · preuves ${x.evidence_count}</div></div><span class="badge">${x.status}</span></div>`).join(''):'<div class="muted">Aucun litige ouvert.</div>');}
+else{const d=await adminFetch('/api/admin/finance');p.innerHTML='<h3>Finance</h3>'+d.byStatus.map(x=>`<div class="row"><div><b>${x.status}</b><div class="muted">${x.count} opération(s)</div></div><b>${Number(x.total||0).toLocaleString('fr-FR')} ${x.currency||'XOF'}</b></div>`).join('');}
+}catch(e){p.innerHTML='Erreur : '+e.message;}}
+async function adminVerify(id,v){try{await adminFetch('/api/admin/professionals/'+id+'/verify',{method:'POST',body:JSON.stringify({verified:!!v})});loadAdminDashboard();}catch(e){alert(e.message)}}
+async function reviewDoc(id,status){try{await adminFetch('/api/admin/documents/'+id+'/review',{method:'POST',body:JSON.stringify({status})});adminTab('docs',document.querySelectorAll('#kokoAdminDashboard .tab')[1]);}catch(e){alert(e.message)}}
+</script><div id="kokoDisputePanel" class="ksec" style="display:none">
+<div class="card"><h2>⚠️ Centre de réclamation</h2><p>Un litige doit être basé sur des faits et, lorsque possible, accompagné de preuves.</p>
+<label>ID de la demande</label><input id="disputeRequestId" type="number" placeholder="Ex. 125">
+<label>Motif</label><select id="disputeReason"><option>Travail non conforme</option><option>Travail non terminé</option><option>Prix différent du devis</option><option>Retard important</option><option>Dommage constaté</option><option>Autre</option></select>
+<label>Description</label><textarea id="disputeDescription" rows="4" placeholder="Décrivez précisément le problème..."></textarea>
+<button class="danger" onclick="openKokoDispute()">Ouvrir le litige</button></div>
+<div id="disputeResult"></div></div>
+
+<div id="kokoAuditPanel" class="ksec" style="display:none">
+<div class="card"><h2>🔐 Journal de sécurité</h2><div id="auditRows">Chargement...</div></div>
+</div>
+
+<script>
+async function openKokoDispute(){
+ try{
+  const request_id=Number(document.getElementById('disputeRequestId').value);
+  const reason=document.getElementById('disputeReason').value;
+  const description=document.getElementById('disputeDescription').value;
+  const d=await adminFetch('/api/disputes',{method:'POST',body:JSON.stringify({request_id,reason,description})});
+  document.getElementById('disputeResult').innerHTML='<div class="card">Litige #'+d.id+' créé. Statut : <b>'+d.status+'</b>.</div>';
+ }catch(e){document.getElementById('disputeResult').innerHTML='<div class="card">Erreur : '+e.message+'</div>'}
+}
+async function loadKokoAudit(){
+ try{
+  const rows=await adminFetch('/api/admin/audit-logs?limit=100');
+  document.getElementById('auditRows').innerHTML=rows.length?rows.map(x=>`<div class="row"><b>${x.action}</b><div class="badge">${x.entity_type||''} #${x.entity_id||''}</div><div style="font-size:12px">${x.actor_name||'Système'} · ${x.created_at||''}</div></div>`).join(''):'Aucune action enregistrée.';
+ }catch(e){document.getElementById('auditRows').textContent=e.message}
+}
+</script><div id="kokoSecurityPanel" class="ksecacct" style="display:none">
+<div class="card">
+<h2>🔐 Sécurité du compte</h2>
+<p>Gérez les sessions actives et consultez les événements de sécurité.</p>
+<button onclick="loadKokoSessions()">Actualiser mes sessions</button>
+<button class="danger" onclick="revokeAllKokoSessions()">Déconnecter toutes les sessions</button>
+</div>
+<div class="card"><h3>Sessions</h3><div id="kokoSessions">Chargement...</div></div>
+<div class="card"><h3>Activité de sécurité</h3><div id="kokoSecurityEvents">Chargement...</div></div>
+</div>
+
+<script>
+async function securityFetch(path,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch((window.KOKO_API||localStorage.getItem('koko_api')||'')+path,Object.assign({},opts,{headers}));
+ const d=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+async function loadKokoSessions(){
+ try{
+  const rows=await securityFetch('/api/security/sessions');
+  document.getElementById('kokoSessions').innerHTML=rows.length?rows.map(x=>`<div class="row"><b>${x.status}</b><div class="badge">${x.created_at}</div><div style="font-size:12px">Expire : ${x.expires_at}</div>${x.status==='ACTIVE'?`<button class="danger" onclick="revokeKokoSession(${x.id})">Révoquer</button>`:''}</div>`).join(''):'Aucune session.';
+  const ev=await securityFetch('/api/security/events');
+  document.getElementById('kokoSecurityEvents').innerHTML=ev.length?ev.map(x=>`<div class="row"><b>${x.event_type}</b><div style="font-size:12px">${x.created_at} · ${x.ip_address||'IP non disponible'}</div></div>`).join(''):'Aucun événement.';
+ }catch(e){document.getElementById('kokoSessions').textContent=e.message}
+}
+async function revokeKokoSession(id){try{await securityFetch('/api/security/sessions/'+id+'/revoke',{method:'POST'});loadKokoSessions()}catch(e){alert(e.message)}}
+async function revokeAllKokoSessions(){if(!confirm('Déconnecter toutes les sessions ?'))return;try{await securityFetch('/api/security/sessions/revoke-all',{method:'POST'});loadKokoSessions()}catch(e){alert(e.message)}}
+</script>
+<style>
+#kokoLegalFab{position:fixed;right:16px;bottom:82px;z-index:9999;border:0;border-radius:999px;padding:11px 15px;background:#111827;color:#fff;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+#kokoLegalPanel{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;display:none;align-items:flex-end;justify-content:center}
+#kokoLegalCard{background:#fff;width:min(720px,100%);max-height:82vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px;box-shadow:0 -8px 30px rgba(0,0,0,.2)}
+.kokoLegalDoc{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin:8px 0}.kokoLegalDoc button{margin-top:8px}
+</style>
+<button id="kokoLegalFab" type="button" onclick="kokoOpenLegal()">⚖️ Documents juridiques</button>
+<div id="kokoLegalPanel" onclick="if(event.target.id==='kokoLegalPanel')kokoCloseLegal()">
+  <div id="kokoLegalCard">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><h3 style="margin:0">KÔKÔ — Cadre juridique 🇨🇮</h3><button type="button" onclick="kokoCloseLegal()">✕</button></div>
+    <p style="color:#6b7280">Version Côte d’Ivoire · XOF · Français</p>
+    <div id="kokoLegalDocs">Chargement…</div>
+    <p style="font-size:12px;color:#6b7280;margin-top:14px">Les versions marquées « validation juridique requise » sont des prototypes et ne constituent pas des conditions contractuelles définitives.</p>
+  </div>
+</div>
+<script>
+async function kokoOpenLegal(){
+  document.getElementById('kokoLegalPanel').style.display='flex';
+  const box=document.getElementById('kokoLegalDocs');
+  try{
+    const r=await fetch('/api/legal/documents'); const d=await r.json();
+    box.innerHTML=(d.documents||[]).map(x=>`<div class="kokoLegalDoc"><b>${x.title}</b><div style="font-size:13px;color:#6b7280">Version ${x.version} · ${x.status==='PUBLISHED'?'Publié':'Validation juridique requise'}</div><button type="button" onclick="kokoViewLegal('${x.slug}')">Lire</button></div>`).join('');
+  }catch(e){box.innerHTML='<div>Impossible de charger les documents.</div>'}
+}
+function kokoCloseLegal(){document.getElementById('kokoLegalPanel').style.display='none'}
+async function kokoViewLegal(slug){
+  try{const r=await fetch('/api/legal/documents/'+encodeURIComponent(slug));const d=await r.json();alert((d.document?.title||'Document')+'\n\n'+(d.document?.content||''));}
+  catch(e){alert('Document indisponible')}
+}
+</script>
+
+
+<style>#kokoProofFab{position:fixed;right:16px;bottom:136px;z-index:9998;border:0;border-radius:999px;padding:11px 15px;background:#166534;color:#fff;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.18)}</style>
+<button id="kokoProofFab" type="button" onclick="kokoOpenProof()">✍️ Preuve électronique</button>
+<div id="kokoProofPanel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10001;align-items:flex-end;justify-content:center" onclick="if(event.target.id==='kokoProofPanel')this.style.display='none'>
+<div style="background:#fff;width:min(720px,100%);max-height:82vh;overflow:auto;border-radius:22px 22px 0 0;padding:20px">
+<div style="display:flex;justify-content:space-between"><h3>Preuve électronique KÔKÔ</h3><button onclick="document.getElementById('kokoProofPanel').style.display='none'">✕</button></div>
+<p style="font-size:13px;color:#6b7280">Cette fonction enregistre une acceptation électronique et une empreinte du contrat. Elle ne simule pas une signature électronique qualifiée.</p>
+<div id="kokoProofBox">Connectez-vous et ouvrez un contrat pour consulter sa preuve.</div>
+</div></div>
+<script>
+async function kokoOpenProof(){document.getElementById('kokoProofPanel').style.display='flex';}
+</script>
+
+
+<!-- KOKO_V34_DOSSIER_ADAPTATIF_UI -->
+<section id="kokoDossiersV34" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">📁 Dossier de prestation KÔKÔ</h3>
+  <p class="muted">KÔKÔ adapte automatiquement le niveau de suivi : <b>Simple</b>, <b>Standard</b> ou <b>Chantier</b>. Ces niveaux sont des règles produit et non des seuils légaux.</p>
+  <button onclick="kokoLoadDossiersV34()">Mes dossiers</button>
+  <div id="kokoDossiersV34Result" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoDossierFetchV34(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{}); if(token) headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers})); let d={}; try{d=await r.json()}catch(e){}
+ if(!r.ok) throw new Error(d.error||'Erreur'); return d;
+}
+function kdEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function kdBadge(level){return level==='CHANTIER'?'🏗️ Chantier':level==='STANDARD'?'📋 Standard':'⚡ Simple';}
+async function kokoLoadDossiersV34(){
+ try{
+  const rows=await kokoDossierFetchV34('/api/dossiers');
+  document.getElementById('kokoDossiersV34Result').innerHTML=rows.length?rows.map(d=>`<div style="padding:12px;border:1px solid #ddd;margin-top:8px;border-radius:8px">
+   <strong>${kdEsc(d.title)}</strong><br><span>${kdBadge(d.level)}</span> — ${kdEsc(d.status)}<br>
+   Montant indicatif : <b>${Number(d.amount_xof||0).toLocaleString('fr-FR')} XOF</b><br>
+   <button style="margin-top:8px" onclick="kokoOpenDossierV34(${d.id})">Ouvrir le dossier</button>
+  </div>`).join(''):'<p>Aucun dossier. Un dossier peut être créé depuis une demande avec <code>POST /api/dossiers/from-request/:requestId</code>.</p>';
+ }catch(e){document.getElementById('kokoDossiersV34Result').innerHTML='<span style="color:#b00">'+kdEsc(e.message)+'</span>';}
+}
+async function kokoOpenDossierV34(id){
+ try{
+  const d=await kokoDossierFetchV34('/api/dossiers/'+id);
+  const box=document.getElementById('kokoDossiersV34Result');
+  box.innerHTML=`<div style="padding:12px;border:1px solid #ddd;border-radius:8px">
+   <button onclick="kokoLoadDossiersV34()">← Retour</button>
+   <h4>${kdEsc(d.dossier.title)}</h4>
+   <p><b>Niveau :</b> ${kdBadge(d.dossier.level)}<br><b>Montant :</b> ${Number(d.dossier.amount_xof||0).toLocaleString('fr-FR')} XOF</p>
+   <p><b>Documents :</b> ${(d.documents||[]).length} &nbsp; <b>Preuves :</b> ${(d.evidence||[]).length} &nbsp; <b>Paiements :</b> ${(d.payments||[]).length}</p>
+   <details><summary>Chronologie</summary>${(d.events||[]).map(e=>`<div style="padding:6px 0;border-bottom:1px solid #eee"><b>${kdEsc(e.event_type)}</b> — ${kdEsc(e.note||'')}</div>`).join('')||'<p>Aucun événement.</p>'}</details>
+   <details style="margin-top:8px"><summary>Documents du dossier</summary>${(d.documents||[]).map(x=>`<div>${kdEsc(x.label)} — ${kdEsc(x.document_type)}</div>`).join('')||'<p>Aucun document.</p>'}</details>
+  </div>`;
+ }catch(e){document.getElementById('kokoDossiersV34Result').innerHTML='<span style="color:#b00">'+kdEsc(e.message)+'</span>';}
+}
+</script>
+
+
+<style>
+.koko-v35-card{border:1px solid #e5e7eb;border-radius:14px;padding:14px;margin-top:12px;background:#fff}
+.koko-v35-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.koko-v35-step{padding:10px;border-radius:10px;background:#f7f7f8;border-left:4px solid #111827}
+.koko-v35-step small{display:block;color:#6b7280;margin-top:4px}
+</style>
+<script>
+function kokoV35Money(n){return Number(n||0).toLocaleString('fr-FR')+' XOF'}
+async function kokoV35LoadMilestones(dossierId){
+  const box=document.getElementById('kokoV35Milestones');
+  if(!box)return;
+  box.innerHTML='<p>Chargement des jalons…</p>';
+  try{
+    const r=await fetch('/api/dossiers/'+dossierId+'/milestones',{headers:{Authorization:'Bearer '+(localStorage.getItem('koko_token')||'')}});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error||'Erreur');
+    if(!d.milestones?.length){box.innerHTML='<p>Aucun jalon. Les jalons sont disponibles pour les dossiers CHANTIER.</p>';return;}
+    box.innerHTML='<div class="koko-v35-grid">'+d.milestones.map(m=>`<div class="koko-v35-step"><b>${kdEsc(m.sequence_no+'. '+m.title)}</b><small>${kdEsc(m.status)} · ${kokoV35Money(m.amount_xof)}${m.percentage!=null?' · '+m.percentage+'%':''}</small>${m.status==='PLANNED'?`<button onclick="kokoV35Action(${m.id},'start')">Démarrer</button>`:''}${m.status==='IN_PROGRESS'?`<button onclick="kokoV35Action(${m.id},'complete')">Déclarer terminé</button>`:''}${m.status==='AWAITING_CLIENT'?`<button onclick="kokoV35Action(${m.id},'validate')">Valider</button>`:''}</div>`).join('')+'</div>';
+  }catch(e){box.innerHTML='<p>'+kdEsc(e.message)+'</p>';}
+}
+async function kokoV35Action(id,action){
+  try{
+    const r=await fetch('/api/milestones/'+id+'/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+(localStorage.getItem('koko_token')||'')}});
+    const d=await r.json(); if(!r.ok) throw new Error(d.error||'Erreur');
+    alert('Jalon mis à jour.');
+    const open=document.querySelector('[data-koko-v35-dossier]')?.dataset.kokoV35Dossier; if(open) kokoV35LoadMilestones(open);
+  }catch(e){alert(e.message)}
+}
+function kokoV35InjectDossierPanel(){
+  if(document.getElementById('kokoV35Panel'))return;
+  const host=document.querySelector('#kokoDossiers')||document.querySelector('#kokoDossier')||document.body;
+  const el=document.createElement('section'); el.id='kokoV35Panel'; el.className='koko-v35-card';
+  el.innerHTML='<h3>🏗️ Étapes de chantier & jalons</h3><p class="muted">Pour les dossiers CHANTIER, chaque étape peut être suivie, déclarée terminée puis validée par le client.</p><div id="kokoV35Milestones"><p>Ouvrez un dossier CHANTIER pour afficher ses jalons.</p></div>';
+  host.appendChild(el);
+}
+document.addEventListener('DOMContentLoaded',kokoV35InjectDossierPanel);
+</script>
+
+</body></html>
+
+<!-- KOKO_V18_CLIENT_UI -->
+<section id="clientExperience" class="card" style="margin-top:16px">
+  <div class="row" style="justify-content:space-between;align-items:center;gap:8px">
+    <div>
+      <h2 style="margin:0">Mon espace KÔKÔ</h2>
+      <p class="muted" style="margin:4px 0">Votre activité, vos favoris, vos adresses et vos dépenses.</p>
+    </div>
+    <button onclick="loadClientExperience()">Actualiser</button>
+  </div>
+
+  <div id="clientKpis" class="grid" style="margin-top:12px"></div>
+
+  <div class="tabs" style="margin-top:14px">
+    <button onclick="clientTab('profil')">Profil</button>
+    <button onclick="clientTab('historique')">Historique</button>
+    <button onclick="clientTab('favoris')">Favoris</button>
+    <button onclick="clientTab('adresses')">Adresses</button>
+    <button onclick="clientTab('notifications')">Notifications</button>
+    <button onclick="clientTab('litiges')">Litiges</button>
+  </div>
+  <div id="clientExperienceContent" style="margin-top:12px"></div>
+</section>
+
+<script>
+const KOKO_V18 = { tab:'profil', cache:{} };
+async function kokoFetch(url, opts={}) {
+  const token = localStorage.getItem('koko_token') || localStorage.getItem('token') || '';
+  const headers = Object.assign({'Content-Type':'application/json'}, opts.headers||{});
+  if(token) headers.Authorization = 'Bearer '+token;
+  const r=await fetch(url,Object.assign({},opts,{headers}));
+  let data={}; try{data=await r.json()}catch(e){}
+  if(!r.ok) throw new Error(data.error||'Erreur');
+  return data;
+}
+function moneyXof(n){ return new Intl.NumberFormat('fr-FR').format(Number(n||0))+' FCFA'; }
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function loadClientExperience(){
+  try{
+    const [summary,profile]=await Promise.all([
+      kokoFetch('/api/client/summary'),
+      kokoFetch('/api/client/profile')
+    ]);
+    KOKO_V18.cache.summary=summary; KOKO_V18.cache.profile=profile;
+    document.getElementById('clientKpis').innerHTML=`
+      <div class="card"><strong>${moneyXof(summary.total_spent)}</strong><div class="muted">Dépenses confirmées</div></div>
+      <div class="card"><strong>${summary.active_requests}</strong><div class="muted">Demandes actives</div></div>
+      <div class="card"><strong>${summary.completed_requests}</strong><div class="muted">Interventions terminées</div></div>
+      <div class="card"><strong>${profile.favorite_count}</strong><div class="muted">Professionnels favoris</div></div>`;
+    clientTab(KOKO_V18.tab);
+  }catch(e){ console.warn('KÔKÔ V1.8',e); }
+}
+async function clientTab(tab){
+  KOKO_V18.tab=tab;
+  const box=document.getElementById('clientExperienceContent');
+  if(!box) return;
+  box.innerHTML='<p class="muted">Chargement…</p>';
+  try{
+    if(tab==='profil'){
+      const p=KOKO_V18.cache.profile || await kokoFetch('/api/client/profile');
+      box.innerHTML=`<form onsubmit="saveClientProfile(event)" class="card">
+        <label>Nom<br><input id="cp_name" value="${esc(p.name)}" required></label>
+        <label>Téléphone<br><input id="cp_phone" value="${esc(p.phone||'')}"></label>
+        <label>Email<br><input value="${esc(p.email||'')}" disabled></label>
+        <button type="submit">Enregistrer</button>
+      </form>`;
+    } else if(tab==='historique'){
+      const rows=await kokoFetch('/api/client/history');
+      box.innerHTML=rows.length?rows.map(r=>`<div class="card" style="margin-bottom:8px">
+        <strong>${esc(r.title||r.problem||'Demande KÔKÔ')}</strong>
+        <div class="muted">${esc(r.category||'')} · ${esc(r.zone||'')} · ${esc(r.status||'')}</div>
+        <div>Devis reçus : ${r.quote_count||0}</div>
+      </div>`).join(''):'<p class="muted">Aucune demande dans l’historique.</p>';
+    } else if(tab==='favoris'){
+      const rows=await kokoFetch('/api/client/favorites');
+      box.innerHTML=rows.length?rows.map(r=>`<div class="card" style="margin-bottom:8px">
+        <strong>${esc(r.company_name||r.name||'Professionnel')}</strong>
+        <div class="muted">${esc(r.category||'')} · ${esc(r.zone||'')}</div>
+        <div>⭐ ${esc(r.rating||'—')} ${r.verified?' · KÔKÔ Vérifié':''}</div>
+        <button onclick="removeFavorite(${r.professional_id})">Retirer</button>
+      </div>`).join(''):'<p class="muted">Aucun professionnel favori.</p>';
+    } else if(tab==='adresses'){
+      const rows=await kokoFetch('/api/client/addresses');
+      box.innerHTML=`<form onsubmit="addClientAddress(event)" class="card">
+        <h3>Ajouter une adresse</h3>
+        <input id="ca_label" placeholder="Ex. Maison" required>
+        <input id="ca_text" placeholder="Adresse / repère" required>
+        <input id="ca_zone" placeholder="Zone (ex. Cocody Angré)">
+        <label><input type="checkbox" id="ca_default"> Adresse par défaut</label>
+        <button>Ajouter</button>
+      </form>`+
+      (rows.length?rows.map(a=>`<div class="card" style="margin-top:8px"><strong>${esc(a.label)}</strong>
+        ${a.is_default?' · ⭐ par défaut':''}<div>${esc(a.address_text)}</div><div class="muted">${esc(a.zone||'')}</div>
+        <button onclick="deleteAddress(${a.id})">Supprimer</button></div>`).join(''):'');
+    } else if(tab==='notifications'){
+      const rows=await kokoFetch('/api/client/notifications');
+      box.innerHTML=rows.length?rows.map(n=>`<div class="card" style="margin-bottom:8px;opacity:${n.read_at?'0.65':'1'}">
+        <strong>${esc(n.title||'Notification')}</strong><div>${esc(n.body||'')}</div>
+        <small class="muted">${esc(n.created_at||'')}</small>
+      </div>`).join(''):'<p class="muted">Aucune notification.</p>';
+    } else if(tab==='litiges'){
+      const rows=await kokoFetch('/api/client/disputes');
+      box.innerHTML=rows.length?rows.map(d=>`<div class="card" style="margin-bottom:8px">
+        <strong>Litige #${d.id}</strong><div>${esc(d.reason||'')}</div><div class="muted">${esc(d.status||'')}</div>
+      </div>`).join(''):'<p class="muted">Aucun litige.</p>';
+    }
+  }catch(e){box.innerHTML='<p style="color:#b00">'+esc(e.message)+'</p>';}
+}
+async function saveClientProfile(e){
+  e.preventDefault();
+  try{
+    await kokoFetch('/api/client/profile',{method:'PUT',body:JSON.stringify({name:document.getElementById('cp_name').value,phone:document.getElementById('cp_phone').value})});
+    await loadClientExperience();
+  }catch(e){alert(e.message);}
+}
+async function addClientAddress(e){
+  e.preventDefault();
+  try{
+    await kokoFetch('/api/client/addresses',{method:'POST',body:JSON.stringify({
+      label:document.getElementById('ca_label').value,
+      address_text:document.getElementById('ca_text').value,
+      zone:document.getElementById('ca_zone').value,
+      is_default:document.getElementById('ca_default').checked
+    })});
+    clientTab('adresses');
+  }catch(e){alert(e.message);}
+}
+async function deleteAddress(id){
+  if(!confirm('Supprimer cette adresse ?')) return;
+  try{await kokoFetch('/api/client/addresses/'+id,{method:'DELETE'});clientTab('adresses');}catch(e){alert(e.message);}
+}
+async function removeFavorite(id){
+  try{await kokoFetch('/api/client/favorites/'+id,{method:'DELETE'});clientTab('favoris');}catch(e){alert(e.message);}
+}
+window.addEventListener('load',()=>setTimeout(loadClientExperience,400));
+</script>
+
+
+
+<!-- KOKO_V19_UI -->
+<section id="kokoMatching" class="card" style="margin-top:16px">
+  <h2 style="margin-top:0">Trouver les professionnels adaptés</h2>
+  <p class="muted">KÔKÔ compare plusieurs critères. Vous gardez toujours le choix final.</p>
+  <div class="grid">
+    <input id="km_category" placeholder="Catégorie : Plomberie, Étanchéité…">
+    <input id="km_zone" placeholder="Zone : Cocody, Angré…">
+  </div>
+  <button onclick="kokoPreviewMatches()" style="margin-top:8px">Rechercher</button>
+  <div id="km_results" style="margin-top:12px"></div>
+</section>
+<script>
+async function kmFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token) headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+async function kokoPreviewMatches(){
+ const box=document.getElementById('km_results');
+ box.innerHTML='<p class="muted">Recherche…</p>';
+ try{
+   const d=await kmFetch('/api/matching/preview',{method:'POST',body:JSON.stringify({
+     category:document.getElementById('km_category').value,
+     zone:document.getElementById('km_zone').value
+   })});
+   if(!d.matches.length){box.innerHTML='<p>Aucun professionnel correspondant trouvé pour ces critères.</p>';return;}
+   box.innerHTML=d.matches.map((p,i)=>`
+    <div class="card" style="margin-bottom:8px">
+      <strong>${i+1}. ${escK(p.company_name||p.name||'Professionnel')}</strong>
+      <div>${escK(p.category||'')} · ${escK(p.zone||'')}</div>
+      <div>⭐ ${escK(p.rating||'—')} ${p.verified?'· ✓ KÔKÔ Vérifié':''}</div>
+      <div class="muted">${escK(p.reasons.join(' · '))}</div>
+      <button onclick="kokoOpenPro(${p.professional_id})">Voir le profil</button>
+    </div>`).join('');
+ }catch(e){box.innerHTML='<p style="color:#b00">'+escK(e.message)+'</p>';}
+}
+function escK(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function kokoOpenPro(id){
+  // Intention : réutiliser la fiche professionnel existante de l'application.
+  if(typeof openProfessional==='function') openProfessional(id);
+  else alert('Professionnel #'+id+' — utilisez la fiche professionnelle.');
+}
+</script>
+
+
+
+<!-- KOKO_V20_AI_UI -->
+<section id="kokoAI" class="card" style="margin-top:16px">
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <div>
+      <h2 style="margin:0">Assistant KÔKÔ</h2>
+      <p class="muted">Expliquez votre besoin naturellement. KÔKÔ le structure avec vous.</p>
+    </div>
+    <button onclick="kokoAINew()">Nouvelle demande</button>
+  </div>
+  <div id="kokoAIChat" style="margin-top:12px;max-height:360px;overflow:auto"></div>
+  <div class="row" style="margin-top:10px">
+    <input id="kokoAIInput" placeholder="Ex. J’ai une fuite au plafond à Angré…" onkeydown="if(event.key==='Enter')kokoAISend()">
+    <button onclick="kokoAISend()">Envoyer</button>
+  </div>
+  <div id="kokoAIDraft" style="margin-top:10px"></div>
+</section>
+
+<script>
+let kokoAIConversation=null;
+function kokoEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function kokoAIFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+async function kokoAINew(){
+ try{
+  const d=await kokoAIFetch('/api/ai/conversations',{method:'POST',body:'{}'});
+  kokoAIConversation=d.conversation_id;
+  document.getElementById('kokoAIChat').innerHTML='<div class="card"><strong>KÔKÔ :</strong> Bonjour. Expliquez-moi simplement ce que vous voulez faire.</div>';
+  document.getElementById('kokoAIDraft').innerHTML='';
+ }catch(e){alert(e.message);}
+}
+function kokoAIAdd(role,text){
+ const box=document.getElementById('kokoAIChat');
+ box.innerHTML+=`<div class="card" style="margin-top:6px"><strong>${role==='user'?'Vous':'KÔKÔ'} :</strong> ${kokoEsc(text)}</div>`;
+ box.scrollTop=box.scrollHeight;
+}
+async function kokoAISend(){
+ const input=document.getElementById('kokoAIInput');
+ const text=input.value.trim(); if(!text)return;
+ if(!kokoAIConversation) await kokoAINew();
+ input.value=''; kokoAIAdd('user',text);
+ try{
+  const d=await kokoAIFetch('/api/ai/conversations/'+kokoAIConversation+'/message',{method:'POST',body:JSON.stringify({content:text})});
+  kokoAIAdd('assistant',d.reply);
+  kokoAIShowDraft(d.draft);
+ }catch(e){kokoAIAdd('assistant','Je rencontre un problème technique : '+e.message);}
+}
+function kokoAIShowDraft(d){
+ const box=document.getElementById('kokoAIDraft');
+ box.innerHTML=`<div class="card">
+  <strong>Votre demande structurée</strong>
+  <div>Catégorie : ${kokoEsc(d.category||'À préciser')}</div>
+  <div>Problème : ${kokoEsc(d.problem||'À préciser')}</div>
+  <div>Zone : ${kokoEsc(d.zone||'À préciser')}</div>
+  <div>Urgence : ${kokoEsc(d.urgency||'À préciser')}</div>
+  <div>Budget : ${kokoEsc(d.budget||'Non indiqué')}</div>
+  ${d.ready?'<button onclick="kokoAIConvert()">Créer ma demande et chercher des professionnels</button>':''}
+ </div>`;
+}
+async function kokoAIConvert(){
+ try{
+  const d=await kokoAIFetch('/api/ai/conversations/'+kokoAIConversation+'/convert-and-match',{method:'POST',body:'{}'});
+  kokoAIShowMatches(d);
+ }catch(e){alert(e.message);}
+}
+function kokoAIShowMatches(d){
+ const box=document.getElementById('kokoAIDraft');
+ const matches=d.matches||[];
+ let html=`<div class="card"><strong>Demande #${d.request_id}</strong>
+ <div>${kokoEsc(d.request.category)} · ${kokoEsc(d.request.zone)}</div>
+ <div>${kokoEsc(d.request.problem)}</div>
+ <h3>Professionnels correspondants</h3>`;
+ if(!matches.length){
+   html+='<p>Aucun professionnel correspondant pour le moment. KÔKÔ peut conserver votre demande et vous pourrez réessayer plus tard.</p>';
+ } else {
+   html+=matches.map((p,i)=>`<div class="card" style="margin:8px 0">
+    <strong>${i+1}. ${kokoEsc(p.company_name||p.name||'Professionnel')}</strong>
+    <div>${kokoEsc(p.category||'')} · ${kokoEsc(p.zone||'')}</div>
+    <div>⭐ ${kokoEsc(p.rating||'—')} ${p.verified?'· ✓ KÔKÔ Vérifié':''}</div>
+    <div class="muted">${kokoEsc((p.reasons||[]).join(' · '))}</div>
+    <button onclick="kokoSelectPro(${d.request_id},${p.professional_id})">Contacter ce professionnel</button>
+   </div>`).join('');
+ }
+ html+='</div>';
+ box.innerHTML=html;
+}
+async function kokoSelectPro(requestId,professionalId){
+ try{
+   await kokoAIFetch('/api/requests/'+requestId+'/select-professional',{method:'POST',body:JSON.stringify({professional_id:professionalId})});
+   alert('La demande de mise en relation a été envoyée au professionnel.');
+ }catch(e){alert(e.message);}
+}
+window.addEventListener('load',()=>setTimeout(()=>{if(!kokoAIConversation)kokoAINew();},600));
+</script>
+
+
+
+<!-- KOKO_V21_RESULTS_UI -->
+<section id="kokoV21Explain" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Comment KÔKÔ propose les professionnels</h3>
+  <p class="muted">Les résultats tiennent compte notamment de la catégorie, de la zone, de la vérification, de l’évaluation et de la disponibilité lorsqu’elle est connue.</p>
+  <p class="muted">Il n’y a pas de classement présenté comme une décision définitive : le client choisit le professionnel avec lequel il souhaite poursuivre.</p>
+</section>
+
+
+
+<!-- KOKO_V22_QUOTES_UI -->
+<section id="kokoQuotesV22" class="card" style="margin-top:16px">
+  <div class="row" style="justify-content:space-between;align-items:center">
+    <div>
+      <h2 style="margin:0">Mes devis</h2>
+      <p class="muted">Comparez les propositions reçues avant de choisir.</p>
+    </div>
+  </div>
+  <input id="kokoQuoteRequestId" placeholder="N° de demande">
+  <button onclick="kokoLoadQuotes()">Charger les devis</button>
+  <div id="kokoQuotesList" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoQFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function qEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function qMoney(n){return new Intl.NumberFormat('fr-FR').format(Number(n||0))+' FCFA';}
+async function kokoLoadQuotes(){
+ const id=document.getElementById('kokoQuoteRequestId').value.trim();
+ if(!id)return;
+ const box=document.getElementById('kokoQuotesList');
+ box.innerHTML='<p class="muted">Chargement…</p>';
+ try{
+  const d=await kokoQFetch('/api/requests/'+id+'/quotes/intelligent');
+  if(!d.quotes.length){box.innerHTML='<p>Aucun devis reçu pour cette demande.</p>';return;}
+  box.innerHTML=d.quotes.map((q,i)=>`
+   <div class="card" style="margin-bottom:10px">
+    <div class="row" style="justify-content:space-between">
+      <strong>${qEsc(q.company_name||q.professional_name||'Professionnel')}</strong>
+      <strong>${qMoney(q.amount)}</strong>
+    </div>
+    <div>${qEsc(q.category||'')} · ${qEsc(q.zone||'')}</div>
+    <div>⭐ ${qEsc(q.rating||'—')} ${q.verified?'· ✓ KÔKÔ Vérifié':''}</div>
+    <div>⏱️ Délai : ${qEsc(q.estimated_duration||'Non indiqué')}</div>
+    <div>📅 Début : ${qEsc(q.start_date||'Non indiqué')}</div>
+    <div>🧱 Matériaux : ${q.materials_included?'Inclus':'Non précisé'}</div>
+    ${q.materials_description?`<div>Matériaux : ${qEsc(q.materials_description)}</div>`:''}
+    ${q.warranty_text?`<div>Garantie : ${qEsc(q.warranty_text)}</div>`:''}
+    ${q.payment_terms?`<div>Paiement : ${qEsc(q.payment_terms)}</div>`:''}
+    ${q.notes?`<div>Note : ${qEsc(q.notes)}</div>`:''}
+    <div class="muted">Statut : ${qEsc(q.status||'')}</div>
+    ${String(q.status).toUpperCase()==='PENDING'?`
+      <button onclick="kokoAcceptQuote(${q.id})">Choisir ce devis</button>
+      <button onclick="kokoRejectQuote(${q.id})">Rejeter</button>`:''}
+   </div>`).join('');
+ }catch(e){box.innerHTML='<p style="color:#b00">'+qEsc(e.message)+'</p>';}
+}
+async function kokoAcceptQuote(id){
+ if(!confirm('Confirmer le choix de ce devis ?'))return;
+ try{await kokoQFetch('/api/quotes/'+id+'/accept-intelligent',{method:'POST',body:'{}'});alert('Devis accepté.');kokoLoadQuotes();}catch(e){alert(e.message);}
+}
+async function kokoRejectQuote(id){
+ try{await kokoQFetch('/api/quotes/'+id+'/reject-intelligent',{method:'POST',body:'{}'});kokoLoadQuotes();}catch(e){alert(e.message);}
+}
+</script>
+
+
+
+<!-- KOKO_V22_PRO_QUOTE_UI -->
+<section id="kokoProQuoteV22" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Créer un devis détaillé</h3>
+  <p class="muted">Le montant est une proposition commerciale. Aucun paiement n’est déclenché ici.</p>
+  <input id="pq_quote_id" placeholder="ID du devis">
+  <input id="pq_duration" placeholder="Délai estimé (ex. 2 jours)">
+  <input id="pq_start" placeholder="Date prévue de début">
+  <label><input type="checkbox" id="pq_materials"> Matériaux inclus</label>
+  <input id="pq_material_desc" placeholder="Description des matériaux">
+  <input id="pq_warranty" placeholder="Garantie / conditions">
+  <input id="pq_payment" placeholder="Conditions de paiement">
+  <textarea id="pq_notes" placeholder="Notes"></textarea>
+  <button onclick="kokoSaveProQuoteDetails()">Enregistrer le détail</button>
+</section>
+<script>
+async function kokoSaveProQuoteDetails(){
+ try{
+  const id=document.getElementById('pq_quote_id').value;
+  await kokoQFetch('/api/quotes/'+id+'/details',{method:'POST',body:JSON.stringify({
+   estimated_duration:document.getElementById('pq_duration').value,
+   start_date:document.getElementById('pq_start').value,
+   materials_included:document.getElementById('pq_materials').checked,
+   materials_description:document.getElementById('pq_material_desc').value,
+   warranty_text:document.getElementById('pq_warranty').value,
+   payment_terms:document.getElementById('pq_payment').value,
+   notes:document.getElementById('pq_notes').value
+  })});
+  alert('Détail du devis enregistré.');
+ }catch(e){alert(e.message);}
+}
+</script>
+
+
+
+<!-- KOKO_V23_PAYMENT_UI -->
+<section id="kokoPaymentV23" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Paiement sécurisé</h3>
+  <p class="muted">Le paiement est séparé du choix du devis. KÔKÔ ne débite pas automatiquement le client.</p>
+  <input id="kp_quote_id" placeholder="ID du devis accepté">
+  <input id="kp_amount" type="number" placeholder="Montant à payer (FCFA)">
+  <select id="kp_purpose">
+    <option value="DEPOSIT">Acompte</option>
+    <option value="FULL_PAYMENT">Paiement total</option>
+  </select>
+  <select id="kp_method">
+    <option value="SIMULATOR">Simulation</option>
+    <option value="ORANGE_MONEY_CI">Orange Money CI</option>
+    <option value="MTN_CI">MTN CI</option>
+    <option value="MOOV_CI">Moov CI</option>
+    <option value="WAVE_CI">Wave CI</option>
+    <option value="DJAMO_CI">Djamo CI</option>
+    <option value="CARD">Carte bancaire</option>
+  </select>
+  <button onclick="kokoCreatePaymentIntent()">Préparer le paiement</button>
+  <div id="kokoPaymentResult" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoPFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function kpEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function kokoCreatePaymentIntent(){
+ try{
+  const d=await kokoPFetch('/api/payments/intents',{method:'POST',body:JSON.stringify({
+   quote_id:Number(document.getElementById('kp_quote_id').value),
+   amount:Number(document.getElementById('kp_amount').value),
+   purpose:document.getElementById('kp_purpose').value,
+   method:document.getElementById('kp_method').value
+  })});
+  const p=d.payment;
+  document.getElementById('kokoPaymentResult').innerHTML=
+   `<strong>Intention #${p.id} créée.</strong><br>
+    Montant : ${kpEsc(p.amount)} FCFA<br>
+    Statut : ${kpEsc(p.status)}<br>
+    <span class="muted">${kpEsc(d.message)}</span>
+    ${p.method==='SIMULATOR'?`<br><button onclick="kokoSimulatePayment(${p.id})">Simuler le succès</button>`:''}`;
+ }catch(e){document.getElementById('kokoPaymentResult').innerHTML='<span style="color:#b00">'+kpEsc(e.message)+'</span>';}
+}
+async function kokoSimulatePayment(id){
+ try{await kokoPFetch('/api/payments/intents/'+id+'/simulate-success',{method:'POST',body:'{}'});alert('Paiement simulé avec succès.');}
+ catch(e){alert(e.message);}
+}
+</script>
+
+
+
+<!-- KOKO_V24_FINANCE_UI -->
+<section id="kokoFinanceV24" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Finance & facturation</h3>
+  <p class="muted">Historique basé sur les paiements confirmés. Les intentions non payées ne sont pas comptabilisées comme du chiffre encaissé.</p>
+  <input id="kf_quote_id" placeholder="ID du devis accepté">
+  <input id="kf_subtotal" type="number" placeholder="Montant du devis (FCFA)">
+  <input id="kf_fee" type="number" value="0" min="0" max="100" placeholder="Commission KÔKÔ (%)">
+  <button onclick="kokoIssueInvoice()">Créer la facture</button>
+  <button onclick="kokoLoadInvoices()">Voir mes factures</button>
+  <div id="kokoFinanceResult" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoFFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function kfEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function kfMoney(n){return new Intl.NumberFormat('fr-FR').format(Number(n||0))+' FCFA';}
+async function kokoIssueInvoice(){
+ try{
+  const d=await kokoFFetch('/api/finance/invoices',{method:'POST',body:JSON.stringify({
+   quote_id:Number(document.getElementById('kf_quote_id').value),
+   subtotal:Number(document.getElementById('kf_subtotal').value),
+   koko_fee_percent:Number(document.getElementById('kf_fee').value)
+  })});
+  const i=d.invoice;
+  document.getElementById('kokoFinanceResult').innerHTML=
+   `<strong>Facture ${kfEsc(i.invoice_number)}</strong><br>Total : ${kfMoney(i.total)}<br>Commission KÔKÔ : ${kfMoney(i.koko_fee)}<br>Statut : ${kfEsc(i.status)}`;
+ }catch(e){document.getElementById('kokoFinanceResult').innerHTML='<span style="color:#b00">'+kfEsc(e.message)+'</span>';}
+}
+async function kokoLoadInvoices(){
+ try{
+  const rows=await kokoFFetch('/api/finance/invoices');
+  document.getElementById('kokoFinanceResult').innerHTML=rows.length?rows.map(i=>
+   `<div style="padding:8px 0;border-bottom:1px solid #ddd">
+    <strong>${kfEsc(i.invoice_number)}</strong> — ${kfMoney(i.total)} — ${kfEsc(i.status)}
+   </div>`).join(''):'Aucune facture.';
+ }catch(e){document.getElementById('kokoFinanceResult').innerHTML='<span style="color:#b00">'+kfEsc(e.message)+'</span>';}
+}
+</script>
+
+
+
+<!-- KOKO_V25_DOCUMENT_UI -->
+<section id="kokoDocumentsV25" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Mes justificatifs</h3>
+  <p class="muted">Générez une facture ou un reçu imprimable à partir des données enregistrées.</p>
+  <input id="kd_invoice_id" type="number" placeholder="ID facture">
+  <button onclick="kokoGenerateInvoice()">Générer la facture</button>
+  <input id="kd_payment_id" type="number" placeholder="ID paiement confirmé">
+  <button onclick="kokoGenerateReceipt()">Générer le reçu</button>
+  <button onclick="kokoListDocuments()">Mes documents</button>
+  <div id="kokoDocsResult" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoDFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function kdEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function kokoGenerateInvoice(){
+ try{
+  const id=document.getElementById('kd_invoice_id').value;
+  const d=await kokoDFetch('/api/documents/invoices/'+id+'/generate',{method:'POST',body:'{}'});
+  document.getElementById('kokoDocsResult').innerHTML=`Facture générée : <a href="${kdEsc(d.download_url)}" target="_blank">${kdEsc(d.file_name)}</a>`;
+ }catch(e){document.getElementById('kokoDocsResult').innerHTML='<span style="color:#b00">'+kdEsc(e.message)+'</span>';}
+}
+async function kokoGenerateReceipt(){
+ try{
+  const id=document.getElementById('kd_payment_id').value;
+  const d=await kokoDFetch('/api/documents/payments/'+id+'/receipt',{method:'POST',body:'{}'});
+  document.getElementById('kokoDocsResult').innerHTML=`Reçu généré : <a href="${kdEsc(d.download_url)}" target="_blank">${kdEsc(d.file_name)}</a>`;
+ }catch(e){document.getElementById('kokoDocsResult').innerHTML='<span style="color:#b00">'+kdEsc(e.message)+'</span>';}
+}
+async function kokoListDocuments(){
+ try{
+  const docs=await kokoDFetch('/api/documents');
+  document.getElementById('kokoDocsResult').innerHTML=docs.length?docs.map(d=>`<div style="padding:8px 0;border-bottom:1px solid #ddd">${kdEsc(d.document_type)} — ${kdEsc(d.file_name)} — <a href="/api/documents/${d.id}/download" target="_blank">Ouvrir</a></div>`).join(''):'Aucun document.';
+ }catch(e){document.getElementById('kokoDocsResult').innerHTML='<span style="color:#b00">'+kdEsc(e.message)+'</span>';}
+}
+</script>
+
+
+
+<!-- KOKO_V26_REPUTATION_UI -->
+<section id="kokoReputationV26" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Réputation professionnelle</h3>
+  <p class="muted">Les indicateurs sont calculés à partir des interventions, paiements, réponses, avis et litiges enregistrés.</p>
+  <input id="kr_pro_id" type="number" placeholder="ID du professionnel">
+  <button onclick="kokoLoadReputation()">Voir la réputation</button>
+  <div id="kokoRepResult" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoRFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function krEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function krPct(n){return Number(n||0).toFixed(1)+' %';}
+async function kokoLoadReputation(){
+ try{
+  const id=document.getElementById('kr_pro_id').value;
+  const r=await kokoRFetch('/api/professionals/'+id+'/reputation');
+  document.getElementById('kokoRepResult').innerHTML=`
+   <div><strong>Note moyenne :</strong> ${krEsc(r.average_rating.toFixed(2))}/5 (${r.rating_count} avis)</div>
+   <div><strong>Interventions terminées :</strong> ${r.completed_interventions}</div>
+   <div><strong>Paiements confirmés :</strong> ${r.confirmed_paid_jobs}</div>
+   <div><strong>Taux de réponse :</strong> ${krPct(r.response_rate)}</div>
+   <div><strong>Clients récurrents :</strong> ${krPct(r.repeat_client_rate)}</div>
+   <div><strong>Taux de litiges :</strong> ${krPct(r.dispute_rate)}</div>
+   <div><strong>Taux d'annulation :</strong> ${krPct(r.cancellation_rate)}</div>
+   <div class="muted" style="margin-top:8px">Indicateurs descriptifs : ils ne remplacent pas l’examen du profil, des devis et des avis.</div>`;
+ }catch(e){document.getElementById('kokoRepResult').innerHTML='<span style="color:#b00">'+krEsc(e.message)+'</span>';}
+}
+</script>
+
+
+
+<!-- KOKO_V27_ANTIFRAUD_UI -->
+<section id="kokoAntiFraudV27" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Confiance & sécurité</h3>
+  <p class="muted">Les signaux servent à contrôler les anomalies. Un signal n'est pas une preuve de fraude.</p>
+  <input id="kaf_pro_id" type="number" placeholder="ID professionnel">
+  <button onclick="kokoTrustCheck()">Analyser les signaux</button>
+  <div id="kafResult" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoAFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function kafEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function kokoTrustCheck(){
+ try{
+  const id=document.getElementById('kaf_pro_id').value;
+  const d=await kokoAFetch('/api/professionals/'+id+'/trust-check');
+  const flags=d.flags||[];
+  document.getElementById('kafResult').innerHTML=`
+   <div>Avis analysés : <strong>${d.reviews_total}</strong></div>
+   <div>Avis vérifiés : <strong>${d.verified_reviews}</strong></div>
+   <div>Interventions terminées : <strong>${d.completed_interventions}</strong></div>
+   <div>Paiements confirmés : <strong>${d.paid_jobs}</strong></div>
+   <div>Litiges : <strong>${d.disputes}</strong></div>
+   <div style="margin-top:10px"><strong>Signaux :</strong>
+   ${flags.length?flags.map(f=>`<div style="padding:8px;border:1px solid #ddd;margin-top:6px"><b>${kafEsc(f.severity)}</b> — ${kafEsc(f.type)}<br>${kafEsc(f.reason)}</div>`).join(''):'Aucun signal selon les contrôles actuels.'}</div>`;
+ }catch(e){document.getElementById('kafResult').innerHTML='<span style="color:#b00">'+kafEsc(e.message)+'</span>';}
+}
+</script>
+
+
+
+<!-- KOKO_V28_KYC_UI -->
+<section id="kokoKycV28" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">KÔKÔ Vérification professionnelle</h3>
+  <p class="muted">Préparez votre dossier d’identité et de conformité. Les pièces sensibles doivent être stockées dans un espace privé et sécurisé en production.</p>
+  <button onclick="kokoLoadKyc()">Voir mon dossier</button>
+  <div id="kokoKycResult" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoKycFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function kycEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function kokoLoadKyc(){
+ try{
+  const d=await kokoKycFetch('/api/kyc/me');
+  if(!d.profile){
+   document.getElementById('kokoKycResult').innerHTML='<p>Aucun dossier KYC. Créez votre dossier via l’API KYC.</p>';
+   return;
+  }
+  document.getElementById('kokoKycResult').innerHTML=
+   '<div><strong>Statut :</strong> '+kycEsc(d.profile.verification_status)+'</div>'+
+   '<div><strong>Niveau :</strong> '+kycEsc(d.profile.verification_level)+'</div>'+
+   '<div><strong>Expiration :</strong> '+kycEsc(d.profile.expires_at||'—')+'</div>'+
+   '<div style="margin-top:8px"><strong>Pièces :</strong> '+(d.documents||[]).length+'</div>'+
+   '<div style="margin-top:8px"><strong>Événements :</strong> '+(d.events||[]).length+'</div>';
+ }catch(e){document.getElementById('kokoKycResult').innerHTML='<span style="color:#b00">'+kycEsc(e.message)+'</span>';}
+}
+</script>
+
+
+
+<!-- KOKO_V29_CONTRACTS_UI -->
+<section id="kokoContractsV29" class="card" style="margin-top:16px">
+  <h3 style="margin-top:0">Contrats & engagement</h3>
+  <p class="muted">Le contrat récapitule le périmètre, le montant, les délais, les conditions et l’accord des deux parties.</p>
+  <button onclick="kokoLoadContracts()">Mes contrats</button>
+  <div id="kokoContractsResult" style="margin-top:12px"></div>
+</section>
+<script>
+async function kokoContractFetch(url,opts={}){
+ const token=localStorage.getItem('koko_token')||localStorage.getItem('token')||'';
+ const headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+ if(token)headers.Authorization='Bearer '+token;
+ const r=await fetch(url,Object.assign({},opts,{headers}));
+ let d={};try{d=await r.json()}catch(e){}
+ if(!r.ok)throw new Error(d.error||'Erreur');
+ return d;
+}
+function kcEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+async function kokoLoadContracts(){
+ try{
+  const rows=await kokoContractFetch('/api/contracts');
+  document.getElementById('kokoContractsResult').innerHTML=rows.length
+   ? rows.map(c=>`<div style="padding:10px;border:1px solid #ddd;margin-top:8px;border-radius:8px">
+      <strong>${kcEsc(c.title)}</strong><br>
+      Statut : <b>${kcEsc(c.contract_status)}</b><br>
+      Montant : ${kcEsc(c.amount)} ${kcEsc(c.currency)}<br>
+      Client : ${c.client_status} — Pro : ${c.professional_status}
+    </div>`).join('')
+   : '<p>Aucun contrat pour le moment.</p>';
+ }catch(e){document.getElementById('kokoContractsResult').innerHTML='<span style="color:#b00">'+kcEsc(e.message)+'</span>';}
+}
+</script>
+

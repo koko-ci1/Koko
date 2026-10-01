@@ -1,0 +1,6 @@
+ID,Cas,Catégorie,Zone,Urgence,Informations utiles,Critère de réussite
+T01,Dépannage fuite d'eau,Plomberie,Cocody Angré,Urgent,Photo + localisation,La demande est structurée sans diagnostic définitif.
+T02,Étanchéité toiture,Étanchéité,Cocody,Rapide,3 photos + créneau,Le professionnel reçoit un besoin exploitable.
+T03,Rénovation appartement,Rénovation,Marcory,Cette semaine,Surface + photos + budget,Les devis peuvent préciser périmètre et exclusions.
+T04,Panne électrique,Électricité,Yopougon,Urgent,Description + photo si sûre,La sécurité prime et KÔKÔ évite les instructions dangereuses.
+T05,Peinture intérieure,Peinture / décoration,Deux-Plateaux,Flexible,Pièces + surface + photos,Les professionnels peuvent proposer des devis comparables.

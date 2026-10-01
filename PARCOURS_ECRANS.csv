@@ -1,0 +1,14 @@
+ID,Écran,Contenu principal
+01_accueil,Accueil,"Besoin de travaux, dépannage ou service ? Décrivez simplement votre besoin."
+02_besoin,Expression du besoin,Zone de saisie libre + bouton photo + bouton envoyer.
+03_assistant,Assistant KÔKÔ,KÔKÔ reformule le besoin et pose uniquement les questions manquantes.
+04_confirmation,Confirmation de la demande,"Catégorie, zone, urgence, créneau, photos et informations complémentaires."
+05_professionnels,Professionnels disponibles,"Liste filtrée par compétence, zone, disponibilité et signaux de confiance."
+06_profil,Profil professionnel,"Services, zone, expérience, vérification, avis, réalisations, disponibilité."
+07_devis,Devis reçus,"Prix, délai, périmètre, exclusions et conditions de chaque proposition."
+08_comparaison,Comparaison,Comparaison factuelle ; le client choisit.
+09_engagement,Engagement,Récapitulatif des conditions et acceptation.
+10_suivi,Suivi intervention,"Timeline en temps réel : confirmé, en route, arrivé, en cours, terminé."
+11_preuves,Preuves,"Photos avant/après, documents et confirmation de fin."
+12_validation,Validation client,Le client confirme ou ouvre un problème/litige.
+13_apres,Après-prestation,"Paiement selon dispositif validé, garantie/SAV, avis."

@@ -1,9 +1,6 @@
-# KÔKÔ — test Render
+# KÔKÔ V4.6 — Tests utilisateur simulés
 
-Prototype minimal de déploiement KÔKÔ.
-- Node.js + Express
-- Interface dans `public/index.html`
-- Endpoint de santé : `/health`
-- Démarrage : `npm start`
+Cinq cas couvrent plomberie, étanchéité, rénovation, électricité et peinture/décoration.
 
-Cette version est destinée au test du déploiement gratuit, pas à la production.
+Principe : on ne cherche pas à faire « joli ». On cherche les blocages du parcours.
+Aucun paiement réel n'est activé.

@@ -1,0 +1,18 @@
+{
+  "version": "4.2",
+  "goal": "real deployment readiness",
+  "adds": [
+    "deployment plan",
+    "smoke tests",
+    "preflight script",
+    "health test",
+    "go/no-go checklist"
+  ],
+  "does_not_do": [
+    "create cloud account",
+    "change DNS",
+    "issue TLS certificate",
+    "activate real payments"
+  ],
+  "next": "connect the actual project repository/server and perform deployment"
+}

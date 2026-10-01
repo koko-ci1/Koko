@@ -1,0 +1,16 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KÔKÔ V4.6 — Tests</title>
+<style>body{font-family:Arial;margin:0;background:#f4f6f8;color:#172033}header{background:#111827;color:#fff;padding:22px}main{max-width:900px;margin:auto;padding:18px}.card{background:#fff;border-radius:14px;padding:18px;margin:12px 0;box-shadow:0 3px 14px #0001}button{padding:11px 15px;border:0;border-radius:9px;background:#111827;color:white;margin:4px}.tag{display:inline-block;padding:5px 9px;border-radius:15px;background:#eef2ff;margin:3px}</style></head>
+<body><header><h1>KÔKÔ V4.6</h1><p>Tests utilisateur — 5 situations réelles</p></header><main id="app"></main>
+<script>
+const tests=[
+["T01","Dépannage fuite d'eau","Plomberie","Cocody Angré","Urgent","Mon évier fuit fortement. Je veux un plombier rapidement."],
+["T02","Étanchéité toiture","Étanchéité","Cocody","Rapide","Mon toit laisse passer l'eau quand il pleut."],
+["T03","Rénovation appartement","Rénovation","Marcory","Cette semaine","Je veux rénover un appartement et obtenir plusieurs devis."],
+["T04","Panne électrique","Électricité","Yopougon","Urgent","Une partie de l'installation électrique ne fonctionne plus."],
+["T05","Peinture intérieure","Peinture / décoration","Deux-Plateaux","Flexible","Je veux repeindre mon salon et deux chambres."]
+];
+let i=0;
+function render(){let t=tests[i];document.getElementById("app").innerHTML=`<div class="card"><h2>${t[1]}</h2><span class="tag">${t[2]}</span><span class="tag">${t[3]}</span><span class="tag">${t[4]}</span><p><b>Demande :</b> ${t[5]}</p><h3>Questions KÔKÔ</h3><p>Où se situe précisément la prestation ? Quand souhaitez-vous intervenir ? Avez-vous des photos ? Quel est votre budget approximatif si vous en avez un ?</p><button onclick="next()">Tester le parcours →</button></div><div class="card"><h3>Après le test</h3><p>Notez de 0 à 2 : compréhension, questions, devis, choix, suivi, preuves et clarté.</p></div>`}
+function next(){i=(i+1)%tests.length;render()} render();
+</script></main></body></html>

@@ -1,0 +1,37 @@
+{
+  "version": "3.9",
+  "name": "Annulation, remboursement & réconciliation",
+  "currency": "XOF",
+  "prototype_only": true,
+  "real_money_movement": false,
+  "statuses": {
+    "cancellation": [
+      "REQUESTED",
+      "APPROVED",
+      "REJECTED",
+      "CANCELLED"
+    ],
+    "refund": [
+      "REQUESTED",
+      "PENDING",
+      "APPROVED",
+      "PROCESSING",
+      "SUCCESS",
+      "FAILED",
+      "REJECTED"
+    ],
+    "reconciliation": [
+      "OPEN",
+      "MATCHED",
+      "PARTIAL",
+      "EXCEPTION",
+      "RESOLVED"
+    ]
+  },
+  "rules": {
+    "full_refund": "remboursement intégral lorsque les conditions contractuelles applicables le prévoient",
+    "partial_refund": "remboursement partiel calculé et justifié selon la prestation réellement exécutée",
+    "provider_action": "aucun remboursement réel sans intégration et confirmation du prestataire de paiement",
+    "dispute_link": "une annulation ou un remboursement peut être lié à un litige sans constituer une preuve automatique de faute"
+  }
+}
