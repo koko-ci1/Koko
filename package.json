@@ -1,0 +1,13 @@
+{
+  "name": "koko",
+  "version": "1.0.0",
+  "private": true,
+  "description": "KÔKÔ - prototype de plateforme ivoirienne de confiance",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
