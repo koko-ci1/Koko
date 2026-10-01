@@ -5,6 +5,38 @@ const jwt = require("jsonwebtoken");
 const Database = require("better-sqlite3");
 const path = require("path");
 const crypto = require("crypto");
+const fs = require("fs");
+const multer = require("multer");
+
+// ================= KÔKÔ — INITIALISATION CENTRALE =================
+const app = express();
+const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || "CHANGE_ME_BEFORE_PRODUCTION";
+const db = new Database("koko.sqlite");
+db.pragma("journal_mode = WAL");
+
+app.use(cors());
+app.use(express.json({limit:"2mb"}));
+app.use(express.static(path.join(__dirname,"public")));
+
+const uploadDir = path.join(__dirname, "uploads", "evidence");
+fs.mkdirSync(uploadDir, { recursive: true });
+const evidenceStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const safe = String(file.originalname || "photo").replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, Date.now() + "-" + Math.random().toString(36).slice(2,9) + "-" + safe);
+  }
+});
+const evidenceUpload = multer({
+  storage: evidenceStorage,
+  limits: { fileSize: 8 * 1024 * 1024 },
+  fileFilter: (req,file,cb) => {
+    if (/^image\/(jpeg|png|webp)$/.test(file.mimetype)) cb(null,true);
+    else cb(new Error("Format image non autorisé"));
+  }
+});
+app.use("/uploads", express.static(path.join(__dirname,"uploads")));
 
 
 
@@ -63,7 +95,7 @@ app.get('/api/legal/check', auth, (req,res)=>{
 });
 
 app.post('/api/admin/legal/publish/:id', auth, (req,res)=>{
-  if(req.user.role!=='ADMIN') return res.status(403).json({error:'Accès administrateur requis'});
+  if(!['admin','ADMIN'].includes(String(req.user.role))) return res.status(403).json({error:'Accès administrateur requis'});
   const d=db.prepare(`SELECT * FROM legal_documents WHERE id=?`).get(Number(req.params.id));
   if(!d) return res.status(404).json({error:'Document introuvable'});
   db.prepare(`UPDATE legal_documents SET status='PUBLISHED',published_at=CURRENT_TIMESTAMP WHERE id=?`).run(d.id);
@@ -73,7 +105,7 @@ app.post('/api/admin/legal/publish/:id', auth, (req,res)=>{
 });
 
 app.get('/api/admin/legal/events', auth, (req,res)=>{
-  if(req.user.role!=='ADMIN') return res.status(403).json({error:'Accès administrateur requis'});
+  if(!['admin','ADMIN'].includes(String(req.user.role))) return res.status(403).json({error:'Accès administrateur requis'});
   res.json(db.prepare(`SELECT * FROM legal_events ORDER BY created_at DESC LIMIT 500`).all());
 });
 
@@ -95,6 +127,11 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 function createKokoNotification(userId, type, title, body, meta={}){
   if(!userId) return;
+  // Compatibilité avec les anciens appels :
+  // createKokoNotification(user,type,title,body,requestId,interventionId,conversationId)
+  if(typeof meta !== 'object' || meta === null){
+    meta={request_id:meta||null,intervention_id:arguments[5]||null,conversation_id:arguments[6]||null};
+  }
   db.prepare(`INSERT INTO notifications
     (user_id,type,title,body,request_id,intervention_id,conversation_id)
     VALUES(?,?,?,?,?,?,?)`)
@@ -131,11 +168,6 @@ function addColumnIfMissing(table, column, definition){
   const cols=db.prepare(`PRAGMA table_info(${table})`).all().map(x=>x.name);
   if(!cols.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
 }
-addColumnIfMissing('users','latitude','REAL');
-addColumnIfMissing('users','longitude','REAL');
-addColumnIfMissing('professionals','latitude','REAL');
-addColumnIfMissing('professionals','longitude','REAL');
-addColumnIfMissing('professionals','service_radius_km','REAL DEFAULT 15');
 
 // ================= KÔKÔ V1.0 — INTERVENTIONS =================
 db.exec(`
@@ -246,39 +278,6 @@ function initLegalV30(db){
   }
 }
 
-const app = express();
-
-const uploadDir = path.join(__dirname, 'uploads', 'evidence');
-fs.mkdirSync(uploadDir, { recursive: true });
-
-const evidenceStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const safe = String(file.originalname || 'photo').replace(/[^a-zA-Z0-9._-]/g,'_');
-    cb(null, Date.now() + '-' + Math.random().toString(36).slice(2,9) + '-' + safe);
-  }
-});
-const evidenceUpload = multer({
-  storage: evidenceStorage,
-  limits: { fileSize: 8 * 1024 * 1024 },
-  fileFilter: (req,file,cb) => {
-    if (/^image\/(jpeg|png|webp)$/.test(file.mimetype)) cb(null,true);
-    else cb(new Error('Format image non autorisé'));
-  }
-});
-app.use('/uploads', express.static(path.join(__dirname,'uploads')));
-
-const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || "CHANGE_ME_BEFORE_PRODUCTION";
-
-app.use(cors());
-app.use(express.json({limit:"2mb"}));
-app.use(express.static(path.join(__dirname,"public")));
-
-const db = new Database("koko.sqlite");
-initLegalV30(db);
-db.pragma("journal_mode = WAL");
-
 db.exec(`
 CREATE TABLE IF NOT EXISTS users(
  id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -377,11 +376,76 @@ CREATE TABLE IF NOT EXISTS intervention_confirmations(
 );
 `);
 
+// ================= KÔKÔ — MIGRATION DE COMPATIBILITÉ V4.x =================
+function addColumnIfMissing(table, column, definition){
+  const cols=db.prepare(`PRAGMA table_info(${table})`).all().map(x=>x.name);
+  if(!cols.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+
+// Compatibilité des versions précédentes : ces alias permettent aux modules V1→V4
+// de partager un même socle de données sans casser les anciennes installations.
+addColumnIfMissing('users','email','TEXT');
+addColumnIfMissing('users','latitude','REAL');
+addColumnIfMissing('users','longitude','REAL');
+
+addColumnIfMissing('professionals','name','TEXT');
+addColumnIfMissing('professionals','company_name','TEXT');
+addColumnIfMissing('professionals','availability',"TEXT DEFAULT 'AVAILABLE'");
+addColumnIfMissing('professionals','services','TEXT');
+addColumnIfMissing('professionals','location','TEXT');
+addColumnIfMissing('professionals','last_seen_at','TEXT');
+addColumnIfMissing('professionals','service_radius_km','REAL DEFAULT 15');
+addColumnIfMissing('professionals','created_at','TEXT');
+
+addColumnIfMissing('requests','user_id','INTEGER');
+addColumnIfMissing('requests','title','TEXT');
+addColumnIfMissing('requests','problem','TEXT');
+addColumnIfMissing('requests','service','TEXT');
+addColumnIfMissing('requests','location','TEXT');
+addColumnIfMissing('requests','budget','INTEGER');
+
+addColumnIfMissing('professional_documents','review_note','TEXT');
+addColumnIfMissing('professional_documents','reviewed_at','TEXT');
+
+// Backfill des alias pour les anciennes données.
+db.exec(`
+  UPDATE professionals SET
+    name=COALESCE(NULLIF(name,''),business_name),
+    company_name=COALESCE(NULLIF(company_name,''),business_name),
+    location=COALESCE(NULLIF(location,''),zone),
+    services=COALESCE(NULLIF(services,''),category),
+    availability=COALESCE(NULLIF(availability,''),'AVAILABLE'),
+    created_at=COALESCE(created_at,CURRENT_TIMESTAMP);
+  UPDATE requests SET
+    user_id=COALESCE(user_id,client_id),
+    title=COALESCE(NULLIF(title,''),category),
+    problem=COALESCE(NULLIF(problem,''),description),
+    service=COALESCE(NULLIF(service,''),category),
+    location=COALESCE(NULLIF(location,''),zone);
+`);
+
+// Table utilisée par les anciennes routes de matching. Les nouvelles routes
+// utilisent directement professionals.availability.
+db.exec(`CREATE TABLE IF NOT EXISTS professional_availability (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  professional_id INTEGER NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'AVAILABLE',
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);`);
+
+initLegalV30(db);
+
 function auth(req,res,next){
  const h=req.headers.authorization||"";
  if(!h.startsWith("Bearer ")) return res.status(401).json({error:"Authentification requise"});
  try{req.user=jwt.verify(h.slice(7),JWT_SECRET);next()}
  catch(e){return res.status(401).json({error:"Session invalide"})}
+}
+function optionalAuth(req,res,next){
+ const h=req.headers.authorization||"";
+ if(!h.startsWith("Bearer ")) { req.user=null; return next(); }
+ try{ req.user=jwt.verify(h.slice(7),JWT_SECRET); next(); }
+ catch(e){ req.user=null; next(); }
 }
 function token(user){return jwt.sign({id:user.id,role:user.role,name:user.name},JWT_SECRET,{expiresIn:"7d"})}
 
@@ -414,8 +478,9 @@ app.get("/api/me",auth,(req,res)=>{
 app.post("/api/requests",auth,(req,res)=>{
  const {category,description,zone,preferred_time}=req.body;
  if(!category||!description||!zone) return res.status(400).json({error:"Catégorie, description et zone requis"});
- const info=db.prepare("INSERT INTO requests(client_id,category,description,zone,preferred_time) VALUES(?,?,?,?,?)")
- .run(req.user.id,category,description,zone,preferred_time||null);
+ const info=db.prepare(`INSERT INTO requests(client_id,category,description,zone,preferred_time,user_id,title,problem,service,location)
+ VALUES(?,?,?,?,?,?,?,?,?,?)`)
+ .run(req.user.id,category,description,zone,preferred_time||null,req.user.id,category,description,category,zone);
  res.status(201).json(db.prepare("SELECT * FROM requests WHERE id=?").get(info.lastInsertRowid));
 });
 
@@ -443,8 +508,12 @@ app.post("/api/professionals",auth,(req,res)=>{
  if(req.user.role!=="professional") return res.status(403).json({error:"Réservé aux professionnels"});
  const {business_name,category,zone,description=""}=req.body;
  if(!business_name||!category||!zone) return res.status(400).json({error:"Informations professionnelles incomplètes"});
- const info=db.prepare(`INSERT OR REPLACE INTO professionals(user_id,business_name,category,zone,description)
- VALUES(?,?,?,?,?)`).run(req.user.id,business_name,category,zone,description);
+ const info=db.prepare(`INSERT INTO professionals(user_id,business_name,category,zone,description,name,company_name,availability,services,location,created_at)
+ VALUES(?,?,?,?,?,?,?,?,?,?,CURRENT_TIMESTAMP)
+ ON CONFLICT(user_id) DO UPDATE SET
+   business_name=excluded.business_name, category=excluded.category, zone=excluded.zone, description=excluded.description,
+   name=excluded.name, company_name=excluded.company_name, services=excluded.services, location=excluded.location`).run(
+   req.user.id,business_name,category,zone,description,business_name,business_name,'AVAILABLE',category,zone);
  res.status(201).json(db.prepare("SELECT * FROM professionals WHERE user_id=?").get(req.user.id));
 });
 
@@ -490,7 +559,7 @@ app.get('/api/requests/:id/quotes/compare', auth, (req, res) => {
       JOIN professionals p ON p.id = q.professional_id
       JOIN users u ON u.id = p.user_id
       WHERE q.request_id = ?
-      ORDER BY q.price ASC, q.created_at ASC
+      ORDER BY q.amount ASC, q.created_at ASC
     `).all(requestId);
 
     res.json({request, quotes});
@@ -573,20 +642,6 @@ app.post("/api/reviews",auth,(req,res)=>{
 });
 
 
-app.get("/api/admin/professionals",auth,(req,res)=>{
- if(req.user.role!=="admin") return res.status(403).json({error:"Accès administrateur requis"});
- res.json(db.prepare(`SELECT p.*,u.name,u.phone FROM professionals p JOIN users u ON u.id=p.user_id ORDER BY p.verified ASC,p.id DESC`).all());
-});
-
-app.post("/api/admin/professionals/:id/verify",auth,(req,res)=>{
- if(req.user.role!=="admin") return res.status(403).json({error:"Accès administrateur requis"});
- const pro=db.prepare("SELECT * FROM professionals WHERE id=?").get(req.params.id);
- if(!pro) return res.status(404).json({error:"Professionnel introuvable"});
- db.prepare("UPDATE professionals SET verified=1 WHERE id=?").run(req.params.id);
- res.json({ok:true,verified:true});
-});
-
-
 app.get("/api/professionals/:id",async(req,res)=>{
  const p=db.prepare(`SELECT p.*,u.name,u.phone FROM professionals p JOIN users u ON u.id=p.user_id WHERE p.id=?`).get(req.params.id);
  if(!p) return res.status(404).json({error:"Professionnel introuvable"});
@@ -619,27 +674,6 @@ app.post("/api/professional/projects",auth,(req,res)=>{
    .run(p.id,title,description,category,photo_url);
  res.status(201).json(db.prepare("SELECT * FROM professional_projects WHERE id=?").get(info.lastInsertRowid));
 });
-
-app.get("/api/admin/documents",auth,(req,res)=>{
- if(req.user.role!=="admin") return res.status(403).json({error:"Accès administrateur requis"});
- res.json(db.prepare(`SELECT d.*,p.business_name,u.name,u.phone
-   FROM professional_documents d JOIN professionals p ON p.id=d.professional_id
-   JOIN users u ON u.id=p.user_id ORDER BY d.status='PENDING' DESC,d.id DESC`).all());
-});
-
-app.post("/api/admin/documents/:id/review",auth,(req,res)=>{
- if(req.user.role!=="admin") return res.status(403).json({error:"Accès administrateur requis"});
- const {status,note=""}=req.body;
- if(!["APPROVED","REJECTED","PENDING"].includes(status)) return res.status(400).json({error:"Statut invalide"});
- const d=db.prepare("SELECT * FROM professional_documents WHERE id=?").get(req.params.id);
- if(!d) return res.status(404).json({error:"Document introuvable"});
- db.prepare("UPDATE professional_documents SET status=?,note=? WHERE id=?").run(status,note,req.params.id);
- const count=db.prepare("SELECT COUNT(*) c FROM professional_documents WHERE professional_id=?").get(d.professional_id).c;
- const approved=db.prepare("SELECT COUNT(*) c FROM professional_documents WHERE professional_id=? AND status='APPROVED'").get(d.professional_id).c;
- if(count>0 && count===approved) db.prepare("UPDATE professionals SET verified=1 WHERE id=?").run(d.professional_id);
- res.json({ok:true});
-});
-
 
 app.post("/api/requests/:id/evidence",auth,(req,res)=>{
  const request=db.prepare("SELECT * FROM requests WHERE id=?").get(req.params.id);
@@ -747,81 +781,28 @@ app.post("/api/ai/structure", optionalAuth, (req,res) => {
 
 
 // KÔKÔ V0.6 — Disponibilité & notifications
-function ensureColumn(db, table, column, definition) {
-  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map(x => x.name);
-  if (!cols.includes(column)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-}
-try {
-  ensureColumn(db, 'professionals', 'availability', "TEXT DEFAULT 'AVAILABLE'");
-  ensureColumn(db, 'professionals', 'last_seen_at', "TEXT");
-  db.exec(`CREATE TABLE IF NOT EXISTS notifications (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    message TEXT NOT NULL,
-    request_id INTEGER,
-    read INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );`);
-} catch(e) { console.error("Notification migration:", e.message); }
-
+// La structure notifications V1.3 est la structure canonique.
 function addNotification(userId, type, title, message, requestId=null) {
-  if (!userId) return;
-  db.prepare(`INSERT INTO notifications(user_id,type,title,message,request_id) VALUES(?,?,?,?,?)`)
-    .run(userId,type,title,message,requestId);
+  createKokoNotification(userId,type,title,message,{request_id:requestId});
 }
 
 app.post("/api/pro/availability", auth, (req,res) => {
-  if (req.user.role !== 'professional') return res.status(403).json({error:"Professionnel requis"});
+  if (!['professional','PROFESSIONAL','pro','PRO'].includes(req.user.role)) return res.status(403).json({error:"Professionnel requis"});
   const value = String(req.body.availability || '').toUpperCase();
-  if (!['AVAILABLE','BUSY','OFFLINE'].includes(value))
-    return res.status(400).json({error:"Disponibilité invalide"});
+  if (!['AVAILABLE','BUSY','OFFLINE'].includes(value)) return res.status(400).json({error:"Disponibilité invalide"});
   const pro = db.prepare("SELECT id FROM professionals WHERE user_id=?").get(req.user.id);
   if (!pro) return res.status(404).json({error:"Profil professionnel introuvable"});
   db.prepare("UPDATE professionals SET availability=?, last_seen_at=CURRENT_TIMESTAMP WHERE id=?").run(value,pro.id);
+  db.prepare(`INSERT INTO professional_availability(professional_id,status,updated_at) VALUES(?,?,CURRENT_TIMESTAMP)
+    ON CONFLICT(professional_id) DO UPDATE SET status=excluded.status,updated_at=CURRENT_TIMESTAMP`).run(pro.id,value);
   res.json({success:true,availability:value});
 });
 
 app.get("/api/pro/availability", auth, (req,res) => {
-  if (req.user.role !== 'professional') return res.status(403).json({error:"Professionnel requis"});
+  if (!['professional','PROFESSIONAL','pro','PRO'].includes(req.user.role)) return res.status(403).json({error:"Professionnel requis"});
   const pro = db.prepare("SELECT availability,last_seen_at FROM professionals WHERE user_id=?").get(req.user.id);
   res.json(pro || {availability:"OFFLINE"});
 });
-
-app.get("/api/notifications", auth, (req,res) => {
-  res.json(db.prepare(`SELECT * FROM notifications WHERE user_id=? ORDER BY id DESC LIMIT 50`).all(req.user.id));
-});
-
-app.post("/api/notifications/:id/read", auth, (req,res) => {
-  db.prepare("UPDATE notifications SET read=1 WHERE id=? AND user_id=?").run(req.params.id,req.user.id);
-  res.json({success:true});
-});
-
-app.post("/api/notifications/read-all", auth, (req,res) => {
-  db.prepare("UPDATE notifications SET read=1 WHERE user_id=?").run(req.user.id);
-  res.json({success:true});
-});
-
-app.post("/api/requests/:id/notify-matching-pros", auth, (req,res) => {
-  const request = db.prepare("SELECT * FROM requests WHERE id=?").get(req.params.id);
-  if (!request) return res.status(404).json({error:"Demande introuvable"});
-  if (request.user_id !== req.user.id && req.user.role !== 'admin')
-    return res.status(403).json({error:"Accès refusé"});
-  const pros = db.prepare(`SELECT p.*,u.id AS user_id FROM professionals p JOIN users u ON u.id=p.user_id WHERE p.availability='AVAILABLE'`).all();
-  let count=0;
-  for (const p of pros) {
-    const serviceMatch = !request.service || !p.services || p.services.toLowerCase().includes(String(request.service).toLowerCase());
-    const zoneMatch = !request.location || !p.location || p.location.toLowerCase().includes(String(request.location).toLowerCase());
-    if (serviceMatch || zoneMatch) {
-      addNotification(p.user_id,'NEW_REQUEST','Nouvelle demande KÔKÔ',
-        `${request.service || 'Service'} — ${request.location || 'Zone à préciser'}`,request.id);
-      count++;
-    }
-  }
-  res.json({success:true,notified:count});
-});
-
 
 // KÔKÔ V0.7 — Upload réel de photos de preuve
 app.post("/api/requests/:id/evidence/upload", auth, evidenceUpload.single('photo'), (req,res) => {
@@ -843,20 +824,10 @@ app.post("/api/requests/:id/evidence/upload", auth, evidenceUpload.single('photo
   const url = '/uploads/evidence/' + req.file.filename;
   const comment = String(req.body.comment || '').slice(0,500);
   const info = db.prepare(`INSERT INTO intervention_evidence
-    (request_id,type,url,comment,created_at) VALUES(?,?,?,?,CURRENT_TIMESTAMP)`)
-    .run(request.id,type,url,comment);
+    (request_id,actor_user_id,evidence_type,photo_url,note,created_at) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP)`)
+    .run(request.id,req.user.id,type,url,comment);
   res.json({success:true,id:info.lastInsertRowid,type,url,comment});
 });
-
-app.get("/api/requests/:id/evidence", auth, (req,res) => {
-  const request = db.prepare("SELECT * FROM requests WHERE id=?").get(req.params.id);
-  if (!request) return res.status(404).json({error:"Demande introuvable"});
-  if (request.user_id !== req.user.id && req.user.role !== 'professional' && req.user.role !== 'admin')
-    return res.status(403).json({error:"Accès refusé"});
-  const rows=db.prepare("SELECT * FROM intervention_evidence WHERE request_id=? ORDER BY id ASC").all(request.id);
-  res.json(rows);
-});
-
 
 // KÔKÔ V0.8 — Couche paiement (provider-neutral + mode simulation)
 // Aucun fonds réel ne transite par ce prototype.
@@ -1249,7 +1220,7 @@ app.post('/api/notifications/event', auth, (req,res)=>{
 // ==================== KÔKÔ V1.4 — ESPACE KÔKÔ PRO ====================
 
 function proUser(req, res, next) {
-  if (!req.user || req.user.role !== 'PROFESSIONAL') {
+  if (!req.user || !['professional','PROFESSIONAL','pro','PRO'].includes(String(req.user.role))) {
     return res.status(403).json({error:'Accès réservé à KÔKÔ PRO'});
   }
   next();
@@ -1283,7 +1254,7 @@ app.get('/api/pro/dashboard', auth, proUser, (req,res) => {
   const unreadMessages = db.prepare(`
     SELECT COUNT(*) c FROM messages m
     JOIN conversations c ON c.id=m.conversation_id
-    WHERE c.professional_id=? AND m.sender_id != ? AND m.read_at IS NULL
+    WHERE c.professional_id=? AND m.sender_user_id != ? AND m.read_at IS NULL
   `).get(pro.id, uid).c;
 
   const unreadNotifications = db.prepare(`
@@ -1393,7 +1364,7 @@ app.get('/api/pro/reputation', auth, proUser, (req,res) => {
   `).all(pro.id);
   const reviews=db.prepare(`
     SELECT r.rating,r.comment,r.created_at,u.name client_name
-    FROM reviews r JOIN users u ON u.id=r.client_user_id
+    FROM reviews r JOIN users u ON u.id=r.client_id
     WHERE r.professional_id=? ORDER BY r.created_at DESC LIMIT 20
   `).all(pro.id);
   res.json({stats,distribution,reviews});
@@ -1402,7 +1373,7 @@ app.get('/api/pro/reputation', auth, proUser, (req,res) => {
 
 // ==================== KÔKÔ V1.5 — ADMINISTRATION & CONTRÔLE ====================
 function adminOnly(req,res,next){
-  if(!req.user || req.user.role!=='ADMIN') return res.status(403).json({error:'Accès administrateur requis'});
+  if(!req.user || !['admin','ADMIN'].includes(String(req.user.role))) return res.status(403).json({error:'Accès administrateur requis'});
   next();
 }
 app.get('/api/admin/dashboard', auth, adminOnly, (req,res)=>{
@@ -1414,8 +1385,8 @@ app.get('/api/admin/dashboard', auth, adminOnly, (req,res)=>{
   const activeRequests=db.prepare(`SELECT COUNT(*) c FROM requests WHERE status NOT IN ('CLOSED','COMPLETED','CANCELLED')`).get().c;
   const interventions=db.prepare(`SELECT COUNT(*) c FROM interventions`).get().c;
   const disputes=db.prepare(`SELECT COUNT(*) c FROM requests WHERE status='DISPUTE'`).get().c;
-  const payments=db.prepare(`SELECT COUNT(*) c FROM payments WHERE status='SUCCESS'`).get().c;
-  const volume=db.prepare(`SELECT COALESCE(SUM(amount),0) total FROM payments WHERE status='SUCCESS'`).get().total||0;
+  const payments=db.prepare(`SELECT COUNT(*) c FROM payments WHERE status IN ('SUCCESS','PAID')`).get().c;
+  const volume=db.prepare(`SELECT COALESCE(SUM(amount),0) total FROM payments WHERE status IN ('SUCCESS','PAID')`).get().total||0;
   const unread=db.prepare(`SELECT COUNT(*) c FROM notifications WHERE read_at IS NULL`).get().c;
   res.json({kpis:{users,pros,verified,pendingDocs,requests,activeRequests,interventions,disputes,successfulPayments:payments,volumeXof:Number(volume),unreadNotifications:unread}});
 });
@@ -1433,7 +1404,7 @@ app.get('/api/admin/professionals', auth, adminOnly, (req,res)=>{
 });
 app.get('/api/admin/documents', auth, adminOnly, (req,res)=>{
   const rows=db.prepare(`
-    SELECT d.*, p.name professional_name, u.email professional_email
+    SELECT d.*, p.business_name professional_name, u.email professional_email
     FROM professional_documents d
     JOIN professionals p ON p.id=d.professional_id
     JOIN users u ON u.id=p.user_id
@@ -1460,15 +1431,15 @@ app.get('/api/admin/disputes', auth, adminOnly, (req,res)=>{
   const rows=db.prepare(`
     SELECT r.*, u.name client_name, u.email client_email,
       (SELECT COUNT(*) FROM intervention_evidence e WHERE e.request_id=r.id) evidence_count,
-      (SELECT COUNT(*) FROM payments p WHERE p.request_id=r.id AND p.status='SUCCESS') successful_payments
-    FROM requests r JOIN users u ON u.id=r.user_id
+      (SELECT COUNT(*) FROM payments p WHERE p.request_id=r.id AND p.status IN ('SUCCESS','PAID')) successful_payments
+    FROM requests r JOIN users u ON u.id=r.client_id
     WHERE r.status='DISPUTE' ORDER BY r.created_at DESC
   `).all();
   res.json(rows);
 });
 app.get('/api/admin/finance', auth, adminOnly, (req,res)=>{
   const byStatus=db.prepare(`SELECT status,currency,COUNT(*) count,COALESCE(SUM(amount),0) total FROM payments GROUP BY status,currency ORDER BY status`).all();
-  const monthly=db.prepare(`SELECT substr(created_at,1,7) month,COUNT(*) count,COALESCE(SUM(amount),0) total FROM payments WHERE status='SUCCESS' GROUP BY substr(created_at,1,7) ORDER BY month DESC LIMIT 12`).all();
+  const monthly=db.prepare(`SELECT substr(created_at,1,7) month,COUNT(*) count,COALESCE(SUM(amount),0) total FROM payments WHERE status IN ('SUCCESS','PAID') GROUP BY substr(created_at,1,7) ORDER BY month DESC LIMIT 12`).all();
   res.json({byStatus,monthly});
 });
 app.get('/api/admin/activity', auth, adminOnly, (req,res)=>{
@@ -1565,7 +1536,7 @@ app.get('/api/disputes/:id', auth, (req,res)=>{
   if(!d) return res.status(404).json({error:'Litige introuvable'});
   const allowed=d.opened_by_user_id===req.user.id ||
     (d.professional_id && db.prepare(`SELECT user_id FROM professionals WHERE id=?`).get(d.professional_id)?.user_id===req.user.id) ||
-    req.user.role==='ADMIN';
+    ['admin','ADMIN'].includes(String(req.user.role));
   if(!allowed) return res.status(403).json({error:'Accès refusé'});
   const evidence=db.prepare(`SELECT e.*,u.name submitted_by_name FROM dispute_evidence e JOIN users u ON u.id=e.submitted_by_user_id WHERE e.dispute_id=? ORDER BY e.created_at ASC`).all(d.id);
   res.json({dispute:d,evidence});
@@ -1577,7 +1548,7 @@ app.post('/api/disputes/:id/evidence', auth, (req,res)=>{
   if(!d) return res.status(404).json({error:'Litige introuvable'});
   const allowed=d.opened_by_user_id===req.user.id ||
     (d.professional_id && db.prepare(`SELECT user_id FROM professionals WHERE id=?`).get(d.professional_id)?.user_id===req.user.id) ||
-    req.user.role==='ADMIN';
+    ['admin','ADMIN'].includes(String(req.user.role));
   if(!allowed) return res.status(403).json({error:'Accès refusé'});
   const {evidence_type='NOTE',content='',file_url=''}=req.body||{};
   const info=db.prepare(`INSERT INTO dispute_evidence(dispute_id,submitted_by_user_id,evidence_type,content,file_url) VALUES(?,?,?,?,?)`)
@@ -1926,8 +1897,8 @@ app.get('/api/client/history', auth, requireClient, (req,res)=>{
 
 // Résumé des dépenses — uniquement paiements SUCCESS liés au client
 app.get('/api/client/summary', auth, requireClient, (req,res)=>{
-  const total=db.prepare(`SELECT COALESCE(SUM(amount),0) total FROM payments WHERE payer_user_id=? AND status='SUCCESS'`).get(req.user.id).total||0;
-  const count=db.prepare(`SELECT COUNT(*) c FROM payments WHERE payer_user_id=? AND status='SUCCESS'`).get(req.user.id).c||0;
+  const total=db.prepare(`SELECT COALESCE(SUM(amount),0) total FROM payments WHERE payer_user_id=? AND status IN ('SUCCESS','PAID')`).get(req.user.id).total||0;
+  const count=db.prepare(`SELECT COUNT(*) c FROM payments WHERE payer_user_id=? AND status IN ('SUCCESS','PAID')`).get(req.user.id).c||0;
   const active=db.prepare(`SELECT COUNT(*) c FROM requests WHERE user_id=? AND status NOT IN ('CLOSED','COMPLETED')`).get(req.user.id).c||0;
   const completed=db.prepare(`SELECT COUNT(*) c FROM requests WHERE user_id=? AND status IN ('COMPLETED','CLOSED')`).get(req.user.id).c||0;
   res.json({total_spent:Number(total),successful_payments:Number(count),active_requests:Number(active),completed_requests:Number(completed)});
@@ -2049,9 +2020,8 @@ app.get('/api/requests/:id/matches', auth, async (req,res)=>{
     return res.status(403).json({error:'Accès refusé'});
 
   let pros=db.prepare(`
-    SELECT p.*, COALESCE(pa.status,'') availability
+    SELECT p.*, COALESCE(p.availability,'') availability
     FROM professionals p
-    LEFT JOIN professional_availability pa ON pa.professional_id=p.id
     WHERE 1=1
   `).all();
 
@@ -2090,7 +2060,7 @@ app.get('/api/requests/:id/matches', auth, async (req,res)=>{
 app.post('/api/matching/preview', auth, (req,res)=>{
   const category=String(req.body.category||'').trim();
   const zone=String(req.body.zone||'').trim();
-  const pros=db.prepare(`SELECT p.*,COALESCE(pa.status,'') availability FROM professionals p LEFT JOIN professional_availability pa ON pa.professional_id=p.id`).all();
+  const pros=db.prepare(`SELECT p.*,COALESCE(p.availability,'') availability FROM professionals p`).all();
   const request={category,zone};
   const matches=pros.map(p=>({...p,...kokoMatchScore(request,p)}))
     .filter(x=>x.score>15).sort((a,b)=>b.score-a.score).slice(0,10)
@@ -2261,8 +2231,8 @@ app.post('/api/ai/conversations/:id/convert', auth, (req,res)=>{
   if(!c) return res.status(404).json({error:'Conversation introuvable'});
   const d=db.prepare(`SELECT * FROM ai_request_drafts WHERE conversation_id=? ORDER BY id DESC LIMIT 1`).get(id);
   if(!d || !d.category || !d.problem || !d.zone) return res.status(400).json({error:'La demande doit encore être complétée'});
-  const r=db.prepare(`INSERT INTO requests(user_id,category,problem,zone,budget,status) VALUES(?,?,?,?,?,?)`)
-    .run(req.user.id,d.category,d.problem,d.zone,d.budget||null,'OPEN');
+  const r=db.prepare(`INSERT INTO requests(client_id,category,description,zone,preferred_time,status,user_id,title,problem,service,location,budget) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(req.user.id,d.category,d.problem,d.zone,null,'OPEN',req.user.id,d.category,d.problem,d.category,d.zone,d.budget?Number(String(d.budget).replace(/[^0-9]/g,''))||null:null);
   db.prepare(`UPDATE ai_conversations SET request_id=?,status='CONVERTED',updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(r.lastInsertRowid,id);
   res.status(201).json({request_id:r.lastInsertRowid});
 });
@@ -2282,8 +2252,8 @@ app.post('/api/ai/conversations/:id/convert-and-match', auth, (req,res)=>{
 
   let requestId=c.request_id;
   if(!requestId){
-    const r=db.prepare(`INSERT INTO requests(user_id,category,problem,zone,budget,status) VALUES(?,?,?,?,?,?)`)
-      .run(req.user.id,d.category,d.problem,d.zone,d.budget||null,'OPEN');
+    const r=db.prepare(`INSERT INTO requests(client_id,category,description,zone,preferred_time,status,user_id,title,problem,service,location,budget) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(req.user.id,d.category,d.problem,d.zone,null,'OPEN',req.user.id,d.category,d.problem,d.category,d.zone,d.budget?Number(String(d.budget).replace(/[^0-9]/g,''))||null:null);
     requestId=r.lastInsertRowid;
     db.prepare(`UPDATE ai_conversations SET request_id=?,status='CONVERTED',updated_at=CURRENT_TIMESTAMP WHERE id=?`)
       .run(requestId,id);
@@ -2291,9 +2261,8 @@ app.post('/api/ai/conversations/:id/convert-and-match', auth, (req,res)=>{
 
   const request=db.prepare(`SELECT * FROM requests WHERE id=?`).get(requestId);
   const pros=db.prepare(`
-    SELECT p.*, COALESCE(pa.status,'') availability
+    SELECT p.*, COALESCE(p.availability,'') availability
     FROM professionals p
-    LEFT JOIN professional_availability pa ON pa.professional_id=p.id
   `).all();
 
   const matches=pros.map(p=>{
@@ -3775,7 +3744,7 @@ app.get('/api/contracts/:id/proof', auth, (req,res)=>{
 });
 
 app.get('/api/admin/contracts/:id/proof', auth, (req,res)=>{
-  if(req.user.role!=='ADMIN') return res.status(403).json({error:'Accès administrateur requis'});
+  if(!['admin','ADMIN'].includes(String(req.user.role))) return res.status(403).json({error:'Accès administrateur requis'});
   const c=db.prepare(`SELECT * FROM contracts WHERE id=?`).get(Number(req.params.id));
   if(!c) return res.status(404).json({error:'Contrat introuvable'});
   const snapshot=db.prepare(`SELECT * FROM contract_snapshots WHERE contract_id=? ORDER BY contract_version DESC LIMIT 1`).get(c.id);
@@ -3916,7 +3885,7 @@ app.post('/api/dossiers/:id/refresh', auth, (req,res)=>{
 });
 
 app.get('/api/admin/dossiers', auth, (req,res)=>{
-  if(req.user.role!=='ADMIN') return res.status(403).json({error:'Accès administrateur requis'});
+  if(!['admin','ADMIN'].includes(String(req.user.role))) return res.status(403).json({error:'Accès administrateur requis'});
   const level=req.query.level?String(req.query.level).toUpperCase():null;
   const rows=level?db.prepare(`SELECT * FROM service_dossiers WHERE level=? ORDER BY created_at DESC`).all(level):db.prepare(`SELECT * FROM service_dossiers ORDER BY created_at DESC`).all();
   res.json(rows);
