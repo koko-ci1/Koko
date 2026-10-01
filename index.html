@@ -1203,7 +1203,10 @@ async function kokoSelectPro(requestId,professionalId){
    alert('La demande de mise en relation a été envoyée au professionnel.');
  }catch(e){alert(e.message);}
 }
-window.addEventListener('load',()=>setTimeout(()=>{if(!kokoAIConversation)kokoAINew();},600));
+window.addEventListener('load',()=>setTimeout(()=>{
+  const token=localStorage.getItem('koko_token')||localStorage.getItem('token');
+  if(token && !kokoAIConversation) kokoAINew();
+},600));
 </script>
 
 
