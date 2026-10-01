@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KÔKÔ — Vérifie. Trouve. Achète. Fais.</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;background:#f7f7fb;color:#17171c}
+    header{padding:28px 20px;background:#17122b;color:white}
+    main{max-width:760px;margin:auto;padding:20px}
+    .card{background:white;border-radius:18px;padding:20px;margin:16px 0;box-shadow:0 5px 20px #00000010}
+    input,textarea,button{width:100%;box-sizing:border-box;padding:14px;margin-top:10px;border-radius:10px;border:1px solid #ddd;font-size:16px}
+    button{background:#6d28d9;color:white;border:0;font-weight:700}
+    .ok{padding:12px;border-radius:10px;background:#eefdf3;margin-top:12px}
+  </style>
+</head>
+<body>
+<header>
+  <h1>KÔKÔ</h1>
+  <div>Vérifie. Trouve. Achète. Fais.</div>
+</header>
+<main>
+  <div class="card">
+    <h2>Quel service recherchez-vous ?</h2>
+    <textarea id="need" rows="4" placeholder="Ex. Je cherche un professionnel pour refaire l'étanchéité de ma toiture à Cocody."></textarea>
+    <button onclick="analyze()">Continuer</button>
+    <div id="result"></div>
+  </div>
+  <div class="card">
+    <h3>Prototype KÔKÔ</h3>
+    <p>Cette version sert à vérifier le déploiement gratuit sur Render avant de connecter les fonctionnalités avancées.</p>
+    <p><strong>API :</strong> <span id="api">test...</span></p>
+  </div>
+</main>
+<script>
+function analyze(){
+  const need=document.getElementById('need').value.trim();
+  const r=document.getElementById('result');
+  if(!need){r.innerHTML='<p>Décrivez votre besoin.</p>';return;}
+  r.innerHTML='<div class="ok"><strong>Besoin reçu.</strong><br>'+need.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'<br><br>KÔKÔ peut maintenant préparer la recherche de professionnels.</div>';
+}
+fetch('/health').then(r=>r.json()).then(d=>{
+  document.getElementById('api').textContent=d.ok?'OK — serveur KÔKÔ connecté':'Erreur';
+}).catch(()=>document.getElementById('api').textContent='Non disponible');
+</script>
+</body>
+</html>
