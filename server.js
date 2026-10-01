@@ -4169,5 +4169,7 @@ app.get('/api/dossiers/:id/amendments', auth, (req,res)=>{
   if(!d) return res.status(404).json({error:'Dossier introuvable'});
   res.json(db.prepare(`SELECT a.* FROM contract_amendments a WHERE a.dossier_id=? ORDER BY a.id DESC`).all(d.id));
 });
-
+app.get('/',(req,res)=>{
+  res.sendFile(path.join(__dirname,'index.html'));
+});
 app.listen(PORT,()=>console.log(`KÔKÔ API running on http://localhost:${PORT}`));
